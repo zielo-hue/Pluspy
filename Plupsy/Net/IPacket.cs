@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Plupsy.Net
+namespace Pluspy.Net
 {
     public interface IPacket
     {

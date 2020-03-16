@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace Plupsy.Entities
+namespace Pluspy.Entities
 {
     public readonly struct ServerFavicon
     {

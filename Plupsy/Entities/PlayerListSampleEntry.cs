@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Plupsy.Entities
+namespace Pluspy.Entities
 {
     public sealed class PlayerListSampleEntry
     {

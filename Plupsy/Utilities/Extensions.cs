@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Plupsy.Utilities
+namespace Pluspy.Utilities
 {
     public static class Extensions
     {

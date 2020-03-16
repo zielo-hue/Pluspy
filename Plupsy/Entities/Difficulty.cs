@@ -1,4 +1,4 @@
-﻿namespace Plupsy.Entities
+﻿namespace Pluspy.Entities
 {
     public enum Difficulty
     {

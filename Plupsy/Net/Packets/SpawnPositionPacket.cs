@@ -1,6 +1,6 @@
 ﻿using System.Net.Sockets;
 
-namespace Plupsy.Net.Packets
+namespace Pluspy.Net.Packets
 {
     public sealed class SpawnPositionPacket : IPacket
     {

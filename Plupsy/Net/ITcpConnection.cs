@@ -3,7 +3,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Plupsy.Net
+namespace Pluspy.Net
 {
     public interface ITcpConnection : IDisposable, IAsyncDisposable
     {

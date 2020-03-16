@@ -2,7 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
-namespace Plupsy.Entities
+namespace Pluspy.Entities
 {
     public sealed class Chat
     {

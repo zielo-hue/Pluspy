@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Plupsy
+namespace Pluspy
 {
     class Program
     {
