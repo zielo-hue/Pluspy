@@ -68,9 +68,9 @@ namespace Pluspy.Core
                     {
                         new UserModel("JustNrik", "c41ef456-4ca6-4218-8c94-a20bd17ecc4e")
                     },
-                    new Chat 
+                    new Text 
                     {
-                        Text = "idk" 
+                        Content = "idk" 
                     }, 
                     null);
 

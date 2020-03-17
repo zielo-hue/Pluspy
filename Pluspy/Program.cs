@@ -1,6 +1,6 @@
 ﻿using Pluspy.Core;
+using Pluspy.Entities;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Pluspy
@@ -12,11 +12,8 @@ namespace Pluspy
             if (!File.Exists("server.properties"))
                 File.AppendAllText("server.properties", ConfigSample);
 
-            var config = File.ReadAllLines("server.properties")
-                .Where(x => !string.IsNullOrWhiteSpace(x) && x.TrimStart()[0] != '#')
-                .Select(x => x.Split('='))
-                .ToDictionary(x => x[0].Trim(), x => x[1].Trim());
-            var server = new DefaultMinecraftServer(config);
+            var configObj = MinecraftServerConfiguration.FromFile("server.properties");
+            var server = new DefaultMinecraftServer(configObj);
 
             server.Start();
             await Task.Delay(-1);

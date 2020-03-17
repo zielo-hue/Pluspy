@@ -10,8 +10,6 @@ namespace Pluspy.Core
 {
     public sealed class DefaultMinecraftServer : IMinecraftServer
     {
-        public event EventHandler<IMinecraftServer, MinecraftServerEventArgs>? Log;
-
         private readonly ITcpServer _server;
         private readonly ILogger _logger;
         private readonly ushort _port;
@@ -20,30 +18,13 @@ namespace Pluspy.Core
         public int ProtocolVersion { get; } = 706;
         public int PlayerCapacity { get; } = 50;
         public bool IsOnline { get; private set; }
-        public Chat Description { get; set; } = new Chat
-        {
-            Color = Color.White,
-            Subcomponents = new List<Chat>()
-            {
-                new Chat
-                {
-                    Text = "Default Server",
-                    IsBold = true,
-                    Color = Color.Cyan
-                },
-                new Chat
-                {
-                    Text = "Server",
-                    Color = Color.White
-                }
-            }
-        };
-        public ServerFavicon Icon { get; set; }
+        public Text Description { get; set; } = Text.Default;
+        public Favicon Icon { get; set; }
 
-        public DefaultMinecraftServer(IDictionary<string, string> config)
+        public DefaultMinecraftServer(MinecraftServerConfiguration config)
         {
-            _port = ushort.TryParse(config["server-port"], out var port) ? port : (ushort)25565;
-            _logger = new DefaultLogger(this);
+            _port = config.ServerPort;
+            _logger = DefaultLogger.Instance;
             _server = new DefaultTcpServer(new DefaultTcpConnection(_logger), _logger, _port);
         }
 
@@ -51,7 +32,7 @@ namespace Pluspy.Core
         {
             if (File.Exists("favicon.png"))
             {
-                Icon = ServerFavicon.FromBase64String(Convert.ToBase64String(File.ReadAllBytes("favicon.png")));
+                Icon = Favicon.FromBase64String(Convert.ToBase64String(File.ReadAllBytes("favicon.png")));
                 _logger.LogInformation($"Loaded server favicon from file favicon.png");
             }
             else

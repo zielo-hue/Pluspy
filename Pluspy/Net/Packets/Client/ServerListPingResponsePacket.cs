@@ -19,7 +19,7 @@ namespace Pluspy.Net.Packets.Client
             int currentPlayers, 
             int maximumPlayers,
             List<UserModel> onlinePlayerSample, 
-            Chat serverDescription, 
+            Text serverDescription, 
             string? faviconString = null)
         {
             _serializedData = JsonSerializer.Serialize(

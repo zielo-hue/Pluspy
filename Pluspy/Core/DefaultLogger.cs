@@ -11,23 +11,6 @@ namespace Pluspy.Core
         {
         }
 
-        public DefaultLogger(IMinecraftServer server)
-        {
-            if (server is null)
-                throw new ArgumentNullException(nameof(server));
-
-            _server = server;
-            _server.Log += OnLog;
-        }
-
-        private void OnLog(IMinecraftServer sender, MinecraftServerEventArgs eventArgs)
-        {
-            if (!sender.IsOnline)
-                _server!.Log -= OnLog;
-
-            Log(eventArgs.Message, eventArgs.LogType);
-        }
-
         public void Log(string message, LogType logType)
         {
             lock (this)

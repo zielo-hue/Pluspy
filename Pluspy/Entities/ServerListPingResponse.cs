@@ -11,13 +11,13 @@ namespace Pluspy.Entities
         public ServerListPingResponsePlayerList Players { get; }
 
         [JsonPropertyName("description")]
-        public Chat Description { get; }
+        public Text Description { get; }
 
         [JsonPropertyName("favicon")]
         public string? FaviconString { get; }
 
         public ServerListPingResponse(ServerListPingResponseVersion version, ServerListPingResponsePlayerList players,
-            Chat description, string? faviconString)
+            Text description, string? faviconString)
         {
             Version = version;
             Players = players;
