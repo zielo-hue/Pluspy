@@ -15,7 +15,7 @@ namespace Pluspy.Core
 
         public DefaultTcpServer(ITcpConnection connection)
         {
-            if (_connection is null)
+            if (connection is null)
                 throw new ArgumentNullException(nameof(connection));
 
             _connection = connection;

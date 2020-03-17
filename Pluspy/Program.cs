@@ -1,12 +1,19 @@
-﻿using System;
+﻿using Pluspy.Core;
+using System;
+using System.Threading.Tasks;
 
 namespace Pluspy
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main()
         {
-            Console.WriteLine("Hello World!");
+            var connection = new DefaultTcpConnection(new DefaultLogger());
+            var tcpServer = new DefaultTcpServer(connection);
+            var server = new DefaultMinecraftServer(tcpServer);
+
+            await server.StartAsync();
+            await Task.Delay(-1);
         }
     }
 }

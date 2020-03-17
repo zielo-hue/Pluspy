@@ -1,5 +1,10 @@
-﻿using Pluspy.Net;
+﻿using Pluspy.Entities;
+using Pluspy.Net;
+using Pluspy.Net.Packets.Client;
 using Pluspy.Utilities;
+using Pluspy.Utilities.Constants;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
@@ -9,15 +14,13 @@ namespace Pluspy.Core
 {
     public sealed class DefaultTcpConnection : ITcpConnection
     {
-        private readonly IMinecraftServer _server;
         private readonly ILogger _logger;
         private TcpClient? _client;
         private NetworkStream? _stream;
-        private BinaryWriter? _writer;
+        //private BinaryWriter? _writer;
 
-        public DefaultTcpConnection(IMinecraftServer server, ILogger logger)
+        public DefaultTcpConnection(ILogger logger)
         {
-            _server = server;
             _logger = logger;
         }
 
@@ -45,34 +48,71 @@ namespace Pluspy.Core
             var serverPort = _stream.Read<ushort>();
             var isRequestingStatus = _stream.ReadVarInt() == 1;
 
-            _logger.LogDebug($"[Handshake] New client connecting with protocol version {protocolVersion}, " +
+            _logger.LogDebug(
+                $"New client connecting with protocol version {protocolVersion}, " +
                 $"using server address {serverAddress}:{serverPort}, " +
                 $"and {(isRequestingStatus ? "is requesting status information" : "is requesting to login")}.");
 
             _stream.ReadVarInt();
             _stream.ReadByte();
 
-           // need to add more handling smh
+            if (isRequestingStatus)
+            {
+                var serverListPingResponsePacket = new ServerListPingResponsePacket(
+                    "1.16 Snapshot",
+                    498, 
+                    0,
+                    50, 
+                    new List<PlayerListSampleEntry> 
+                    {
+                        new PlayerListSampleEntry("JustNrik", "c41ef456-4ca6-4218-8c94-a20bd17ecc4e")
+                    },
+                    new Chat 
+                    {
+                        Text = "idk" 
+                    }, null);
+                serverListPingResponsePacket.WriteTo(_stream);
+
+                try
+                {
+                    var latencyPacketLength = _stream.ReadVarInt();
+                    var latencyPacketId = _stream.ReadByte();
+
+                    if (latencyPacketId != (int)ClientPacket.ServerListLatency)
+                    {
+                        _logger.LogInformation($"[Status] Closing socket. Client did not request latency detection.");
+                        Dispose();
+                        return;
+                    }
+
+                    var playload = _stream.Read<long>();
+                    Console.WriteLine(playload);
+
+                    _logger.LogDebug($"Closing socket.");
+                }
+                catch (EndOfStreamException)
+                {
+                    _logger.LogDebug("End of Stream.");
+                }
+                finally
+                {
+                    Dispose();
+                }
+            }
         }
 
         public void Dispose()
         {
             _client?.Close();
             _client?.Dispose();
-            _writer?.Dispose();
+           // _writer?.Dispose();
             _stream?.Dispose();
         }
 
-        public async ValueTask DisposeAsync()
+        public ValueTask DisposeAsync()
         {
-            _client?.Close();
-            _client?.Dispose();
-
-            if (_writer is object)
-                await _writer.DisposeAsync();
-
-            if (_stream is object)
-                await _stream.DisposeAsync();
+            Dispose();
+            return default;
         }
     }
 }
