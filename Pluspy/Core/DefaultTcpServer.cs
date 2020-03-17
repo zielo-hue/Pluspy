@@ -13,13 +13,17 @@ namespace Pluspy.Core
         private readonly ITcpConnection _connection;
         private bool _isDisposed = false;
 
-        public DefaultTcpServer(ITcpConnection connection)
+        public DefaultTcpServer(ITcpConnection connection) : this(connection, 25565)
+        {
+        }
+
+        public DefaultTcpServer(ITcpConnection connection, ushort port)
         {
             if (connection is null)
                 throw new ArgumentNullException(nameof(connection));
 
             _connection = connection;
-            _listener = new TcpListener(IPAddress.Any, 25565);
+            _listener = new TcpListener(IPAddress.Any, port);
             _listener.Start();
         }
 
