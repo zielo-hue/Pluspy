@@ -7,13 +7,5 @@ namespace Pluspy.Net
     public interface IPacket
     {
         void WriteTo(NetworkStream stream);
-        ValueTask WriteToAsync(NetworkStream stream, CancellationToken token = default)
-        {
-            if (token.IsCancellationRequested)
-                return new ValueTask(Task.FromCanceled(token));
-
-            WriteTo(stream);
-            return default;
-        }
     }
 }

@@ -17,7 +17,7 @@ namespace Pluspy.Core
         private readonly ILogger _logger;
 
         public string Version { get; } = "1.16 Snapshot";
-        public int ProtocolVersion { get; } = 498;
+        public int ProtocolVersion { get; } = 706;
         public int PlayerCapacity { get; } = 50;
         public bool IsOnline { get; private set; }
         public Chat Description { get; set; } = new Chat
@@ -46,7 +46,7 @@ namespace Pluspy.Core
             _logger = new DefaultLogger(this);
         }
 
-        public Task StartAsync(CancellationToken token = default)
+        public void Start()
         {
             if (File.Exists("favicon.png"))
             {
@@ -56,24 +56,16 @@ namespace Pluspy.Core
             else
                 _logger.LogWarning($"No favicon found. To enable favicons, save a 64x64 file called \"favicon.png\" into the server's directory.");
 
-            _ = _server.StartAsync(token);
+            _ = Task.Run(_server.Start);
             _logger.LogInformation($"Default server on port 25565. \nMinecraft Version: {Version}\nProtocol Version: {ProtocolVersion}");
-            return Task.CompletedTask;
         }
 
-        public Task StopAsync(CancellationToken token = default)
+        public void Stop()
         {
             _logger.LogInformation($"Stopping the server...");
-
-            try
-            {
-                return _server.StopAsync(token);
-            }
-            finally
-            {
-                _logger.LogInformation("Server stopped.");
-                _server.Dispose();
-            }
+            _server.Stop();
+            _logger.LogInformation("Server stopped.");
+            _server.Dispose();
         }
     }
 }

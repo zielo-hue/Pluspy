@@ -13,7 +13,7 @@ namespace Pluspy.Core
         public bool IsOnline { get; }
         Chat Description { get; set; }
         ServerFavicon Icon { get; set; }
-        Task StartAsync(CancellationToken token);
-        Task StopAsync(CancellationToken token);
+        void Start();
+        void Stop();
     }
 }

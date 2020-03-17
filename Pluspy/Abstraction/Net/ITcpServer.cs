@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 
 namespace Pluspy.Net
 {
-    public interface ITcpServer : IDisposable, IAsyncDisposable
+    public interface ITcpServer : IDisposable
     {
-        Task StartAsync(CancellationToken token = default);
-        Task StopAsync(CancellationToken token = default);
+        void Start();
+        void Stop();
     }
 }

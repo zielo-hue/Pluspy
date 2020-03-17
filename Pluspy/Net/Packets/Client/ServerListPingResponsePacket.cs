@@ -9,7 +9,7 @@ using System.Text.Json;
 
 namespace Pluspy.Net.Packets.Client
 {
-    public sealed class ServerListPingResponsePacket : IPacket
+    public readonly struct ServerListPingResponsePacket : IPacket
     {
         private readonly string _serializedData;
 

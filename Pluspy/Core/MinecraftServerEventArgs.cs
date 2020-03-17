@@ -10,7 +10,7 @@ namespace Pluspy.Core
         public MinecraftServerEventArgs(string message, LogType logType)
         {
             Message = message;
-            LogType = LogType;
+            LogType = logType;
         }
     }
 }

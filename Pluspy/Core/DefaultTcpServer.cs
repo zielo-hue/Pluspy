@@ -23,35 +23,24 @@ namespace Pluspy.Core
             _listener.Start();
         }
 
-        public async Task StartAsync(CancellationToken token = default)
+        public void Start()
         {
-            while (!token.IsCancellationRequested)
+            while (true)
             {
                 if (_isDisposed)
                     throw new ObjectDisposedException(GetType().Name);
 
-                var client = await _listener.AcceptTcpClientAsync();
-                _ = _connection.HandleAsync(client, token);
+                var client = _listener.AcceptTcpClient();
+                _connection.Handle(client);
             }
         }
 
-        public Task StopAsync(CancellationToken token = default)
+        public void Stop()
         {
             if (_isDisposed)
                 throw new ObjectDisposedException(GetType().Name);
 
-            if (token.IsCancellationRequested)
-                return Task.FromCanceled(token);
-
-            try
-            {
-                _listener.Stop();
-                return Task.CompletedTask;
-            }
-            catch (SocketException se)
-            {
-                return Task.FromException(se);
-            }
+            _listener.Stop();
         }
 
         public void Dispose()
@@ -61,21 +50,6 @@ namespace Pluspy.Core
 
             _connection.Dispose();
             _isDisposed = true;
-        }
-
-        public ValueTask DisposeAsync()
-        {
-            if (_isDisposed)
-                return default;
-
-            try
-            {
-                return _connection.DisposeAsync();
-            }
-            finally
-            {
-                _isDisposed = true;
-            }
         }
     }
 }

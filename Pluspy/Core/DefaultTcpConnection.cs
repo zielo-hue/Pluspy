@@ -7,8 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Pluspy.Core
 {
@@ -24,7 +22,7 @@ namespace Pluspy.Core
             _logger = logger;
         }
 
-        public async Task HandleAsync(TcpClient client, CancellationToken token = default)
+        public void Handle(TcpClient client)
         {
             _client = client;
             _stream = client.GetStream();
@@ -39,7 +37,7 @@ namespace Pluspy.Core
                 else
                     _logger.LogError($"Received unknown packet with ID 0x{packetId:x2}.");
 
-                await DisposeAsync();
+                Dispose();
                 return;
             }
 
@@ -71,6 +69,7 @@ namespace Pluspy.Core
                     {
                         Text = "idk" 
                     }, null);
+
                 serverListPingResponsePacket.WriteTo(_stream);
 
                 try
@@ -81,7 +80,6 @@ namespace Pluspy.Core
                     if (latencyPacketId != (int)ClientPacket.ServerListLatency)
                     {
                         _logger.LogInformation($"[Status] Closing socket. Client did not request latency detection.");
-                        Dispose();
                         return;
                     }
 
@@ -107,12 +105,6 @@ namespace Pluspy.Core
             _client?.Dispose();
            // _writer?.Dispose();
             _stream?.Dispose();
-        }
-
-        public ValueTask DisposeAsync()
-        {
-            Dispose();
-            return default;
         }
     }
 }

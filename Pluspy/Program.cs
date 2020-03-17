@@ -12,7 +12,7 @@ namespace Pluspy
             var tcpServer = new DefaultTcpServer(connection);
             var server = new DefaultMinecraftServer(tcpServer);
 
-            await server.StartAsync();
+            server.Start();
             await Task.Delay(-1);
         }
     }
