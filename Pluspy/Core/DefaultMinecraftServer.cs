@@ -4,7 +4,6 @@ using Pluspy.Utilities.Constants;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Pluspy.Core
@@ -15,8 +14,9 @@ namespace Pluspy.Core
 
         private readonly ITcpServer _server;
         private readonly ILogger _logger;
+        private readonly ushort _port;
 
-        public string Version { get; } = "1.16 Snapshot";
+        public string Version { get; } = "20w11a";
         public int ProtocolVersion { get; } = 706;
         public int PlayerCapacity { get; } = 50;
         public bool IsOnline { get; private set; }
@@ -40,10 +40,11 @@ namespace Pluspy.Core
         };
         public ServerFavicon Icon { get; set; }
 
-        public DefaultMinecraftServer(ITcpServer server)
+        public DefaultMinecraftServer(IDictionary<string, string> config)
         {
-            _server = server;
+            _port = ushort.TryParse(config["server-port"], out var port) ? port : (ushort)25565;
             _logger = new DefaultLogger(this);
+            _server = new DefaultTcpServer(new DefaultTcpConnection(_logger), _logger, _port);
         }
 
         public void Start()
@@ -57,7 +58,9 @@ namespace Pluspy.Core
                 _logger.LogWarning($"No favicon found. To enable favicons, save a 64x64 file called \"favicon.png\" into the server's directory.");
 
             _ = Task.Run(_server.Start);
-            _logger.LogInformation($"Default server on port 25565. \nMinecraft Version: {Version}\nProtocol Version: {ProtocolVersion}");
+            _logger.LogInformation($"Default server on port {_port}...");
+            _logger.LogInformation($"Minecraft Version: {Version}");
+            _logger.LogInformation($"Protocol Version: {ProtocolVersion}");
         }
 
         public void Stop()

@@ -1,11 +1,27 @@
 ﻿namespace Pluspy.Utilities.Constants
 {
-    public static class WorldType
+    public sealed class WorldType
     {
-        public const string Default = "default";
-        public const string Flat = "flat";
-        public const string LargeBiomes = "largeBiomes";
-        public const string Amplified = "amplified";
-        public const string Default_1_1 = "default_1_1";
+        public static readonly WorldType Default = "default";
+        public static readonly WorldType Flat = "flat";
+        public static readonly WorldType LargeBiomes = "largeBiomes";
+        public static readonly WorldType Amplified = "amplified";
+        public static readonly WorldType Default_1_1 = "default_1_1";
+
+        private readonly string _type;
+
+        private WorldType(string type)
+        {
+            _type = type;
+        }
+
+        public override string ToString()
+            => _type;
+
+        public static implicit operator string(WorldType worldType)
+            => worldType.ToString();
+
+        public static implicit operator WorldType(string input)
+            => new WorldType(input);
     }
 }

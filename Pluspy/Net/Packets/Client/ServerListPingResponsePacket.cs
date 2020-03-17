@@ -18,7 +18,7 @@ namespace Pluspy.Net.Packets.Client
             int protocolVersion, 
             int currentPlayers, 
             int maximumPlayers,
-            List<PlayerListSampleEntry> onlinePlayerSample, 
+            List<UserModel> onlinePlayerSample, 
             Chat serverDescription, 
             string? faviconString = null)
         {

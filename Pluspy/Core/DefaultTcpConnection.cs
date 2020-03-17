@@ -6,28 +6,31 @@ using Pluspy.Utilities.Constants;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
 using System.Net.Sockets;
+using System.Text.Json;
 
 namespace Pluspy.Core
 {
     public sealed class DefaultTcpConnection : ITcpConnection
     {
         private readonly ILogger _logger;
+        private readonly HttpClient _httpClient;
         private TcpClient? _client;
         private NetworkStream? _stream;
-        //private BinaryWriter? _writer;
 
         public DefaultTcpConnection(ILogger logger)
         {
             _logger = logger;
+            _httpClient = new HttpClient();
         }
 
         public void Handle(TcpClient client)
         {
             _client = client;
             _stream = client.GetStream();
-
             _stream.ReadVarInt();
+
             var packetId = _stream.ReadByte();
 
             if (packetId != 0)
@@ -37,7 +40,7 @@ namespace Pluspy.Core
                 else
                     _logger.LogError($"Received unknown packet with ID 0x{packetId:x2}.");
 
-                Dispose();
+                Reset();
                 return;
             }
 
@@ -57,18 +60,19 @@ namespace Pluspy.Core
             if (isRequestingStatus)
             {
                 var serverListPingResponsePacket = new ServerListPingResponsePacket(
-                    "1.16 Snapshot",
-                    498, 
+                    "10w11a",
+                    protocolVersion, 
                     0,
                     50, 
-                    new List<PlayerListSampleEntry> 
+                    new List<UserModel> 
                     {
-                        new PlayerListSampleEntry("JustNrik", "c41ef456-4ca6-4218-8c94-a20bd17ecc4e")
+                        new UserModel("JustNrik", "c41ef456-4ca6-4218-8c94-a20bd17ecc4e")
                     },
                     new Chat 
                     {
                         Text = "idk" 
-                    }, null);
+                    }, 
+                    null);
 
                 serverListPingResponsePacket.WriteTo(_stream);
 
@@ -79,14 +83,15 @@ namespace Pluspy.Core
 
                     if (latencyPacketId != (int)ClientPacket.ServerListLatency)
                     {
-                        _logger.LogInformation($"[Status] Closing socket. Client did not request latency detection.");
+                        _logger.LogInformation($"Closing socket. Client did not request latency detection.");
                         return;
                     }
 
-                    var playload = _stream.Read<long>();
-                    Console.WriteLine(playload);
+                    _logger.LogDebug($"Received ClientPacket: {ClientPacket.ServerListLatency}");
 
-                    _logger.LogDebug($"Closing socket.");
+                    var playload = _stream.Read<long>();
+
+                    _logger.LogDebug($"Received {playload}");
                 }
                 catch (EndOfStreamException)
                 {
@@ -94,17 +99,34 @@ namespace Pluspy.Core
                 }
                 finally
                 {
-                    Dispose();
+                    Reset();
                 }
+            }
+            else
+            {
+                var username = _stream.ReadString();
+
+                _logger.LogDebug($"The user {username} is attempting to join the game.");
+                _logger.LogDebug($"Retrieving UUID from mojang api...");
+
+                var response = _httpClient.GetStringAsync($"https://api.mojang.com/users/profiles/minecraft/{username}").Result;
+
+                _logger.LogDebug($"Response: {response}");
+                JsonSerializer.Deserialize<UserModel>(response).ToPacket().WriteTo(_stream);
+                _logger.LogDebug($"The user {username} logged in!");
             }
         }
 
-        public void Dispose()
+        private void Reset()
         {
-            _client?.Close();
-            _client?.Dispose();
-           // _writer?.Dispose();
-            _stream?.Dispose();
+            _logger.LogDebug($"Diconnecting the current client");
+            _client?.Client.Disconnect(true);   
+            _logger.LogDebug("Disconnected. Waiting for new clients...");
+        }
+
+        public void Dispose() 
+        {
+            _httpClient.Dispose();
         }
     }
 }

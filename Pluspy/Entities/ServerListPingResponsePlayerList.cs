@@ -12,9 +12,9 @@ namespace Pluspy.Entities
         public int OnlinePlayers { get; }
 
         [JsonPropertyName("sample")]
-        public List<PlayerListSampleEntry> OnlinePlayerSample { get; }
+        public List<UserModel> OnlinePlayerSample { get; }
 
-        public ServerListPingResponsePlayerList(int maxPlayers, int onlinePlayers, List<PlayerListSampleEntry> sample)
+        public ServerListPingResponsePlayerList(int maxPlayers, int onlinePlayers, List<UserModel> sample)
         {
             MaximumPlayers = maxPlayers;
             OnlinePlayers = onlinePlayers;

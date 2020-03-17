@@ -2,8 +2,6 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Pluspy.Core
 {
@@ -11,31 +9,32 @@ namespace Pluspy.Core
     {
         private readonly TcpListener _listener;
         private readonly ITcpConnection _connection;
-        private bool _isDisposed = false;
+        private readonly ILogger _logger;
+        private volatile bool _isDisposed = false;
+        private volatile bool _isStopped = false;
 
-        public DefaultTcpServer(ITcpConnection connection) : this(connection, 25565)
-        {
-        }
-
-        public DefaultTcpServer(ITcpConnection connection, ushort port)
+        public DefaultTcpServer(ITcpConnection connection, ILogger logger, ushort port)
         {
             if (connection is null)
                 throw new ArgumentNullException(nameof(connection));
 
             _connection = connection;
+            _logger = logger;
             _listener = new TcpListener(IPAddress.Any, port);
             _listener.Start();
         }
 
         public void Start()
         {
-            while (true)
+            while (!_isStopped)
             {
                 if (_isDisposed)
                     throw new ObjectDisposedException(GetType().Name);
 
                 var client = _listener.AcceptTcpClient();
+                _logger.LogDebug($"Accepted client: {client.Client.RemoteEndPoint}");
                 _connection.Handle(client);
+                _logger.LogDebug($"Handled client: {client.Client.RemoteEndPoint}");
             }
         }
 
@@ -44,6 +43,7 @@ namespace Pluspy.Core
             if (_isDisposed)
                 throw new ObjectDisposedException(GetType().Name);
 
+            _isStopped = true;
             _listener.Stop();
         }
 
@@ -52,6 +52,7 @@ namespace Pluspy.Core
             if (_isDisposed)
                 return;
 
+            Stop();
             _connection.Dispose();
             _isDisposed = true;
         }
