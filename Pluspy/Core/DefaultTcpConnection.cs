@@ -74,7 +74,7 @@ namespace Pluspy.Core
 
                 try
                 {
-                    var latencyPacketLength = _stream.ReadVarInt();
+                    _stream.ReadVarInt();
                     var latencyPacketId = _stream.ReadByte();
 
                     if (latencyPacketId != (int)ClientPacket.ServerListLatency)
