@@ -127,7 +127,6 @@ namespace Pluspy.Core
                 if (verifyToken.SequenceEqual(encryptionResponse.VerifyToken))
                 {
                     _logger.LogDebug("Token verified.");
-                    SHA1Managed sha1 = new SHA1Managed();
                     Span<byte> inputBytes = stackalloc byte[20 + encryptionResponse.SharedSecret.Length + publicKey.Length];
                     encryptionResponse.SharedSecret.CopyTo(inputBytes.Slice(20));
                     publicKey.CopyTo(inputBytes.Slice(20 + encryptionResponse.SharedSecret.Length));
@@ -142,7 +141,6 @@ namespace Pluspy.Core
                         var user = JsonSerializer.Deserialize<UserModel>(response.Content.ReadAsStringAsync().Result);
                         string formattedUuid = Guid.ParseExact(user.UUID, "N").ToString();
 
-                        MemoryStream ms = new MemoryStream();
                         var aesTransform = new RijndaelManagedTransformCore(encryptionResponse.SharedSecret, CipherMode.CFB, encryptionResponse.SharedSecret, 128, 8, PaddingMode.None, RijndaelManagedTransformMode.Encrypt);
                         var cipherStream = new CryptoStream(_stream, aesTransform, CryptoStreamMode.Write);
 
