@@ -1,9 +1,7 @@
 ﻿using Pluspy.Entities;
 using Pluspy.Net;
 using Pluspy.Net.Packets.Client;
-using Pluspy.Utilities;
-using Pluspy.Utilities.Constants;
-using System;
+using Pluspy.Constants;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
@@ -19,9 +17,9 @@ namespace Pluspy.Core
         private TcpClient? _client;
         private NetworkStream? _stream;
 
-        public DefaultTcpConnection(ILogger logger)
+        public DefaultTcpConnection()
         {
-            _logger = logger;
+            _logger = DefaultLogger.Instance;
             _httpClient = new HttpClient();
         }
 

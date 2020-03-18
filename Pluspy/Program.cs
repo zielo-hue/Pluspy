@@ -1,5 +1,6 @@
 ﻿using Pluspy.Core;
 using Pluspy.Entities;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -16,6 +17,7 @@ namespace Pluspy
             var server = new DefaultMinecraftServer(configObj);
 
             server.Start();
+
             await Task.Delay(-1);
         }
 

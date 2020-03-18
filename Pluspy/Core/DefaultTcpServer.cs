@@ -13,14 +13,15 @@ namespace Pluspy.Core
         private volatile bool _isDisposed = false;
         private volatile bool _isStopped = false;
 
-        public DefaultTcpServer(ITcpConnection connection, ILogger logger, ushort port)
+        public DefaultTcpServer(ushort port) : this(IPAddress.Any, port)
         {
-            if (connection is null)
-                throw new ArgumentNullException(nameof(connection));
+        }
 
-            _connection = connection;
-            _logger = logger;
-            _listener = new TcpListener(IPAddress.Any, port);
+        public DefaultTcpServer(IPAddress ip, ushort port)
+        {
+            _connection = new DefaultTcpConnection();
+            _logger = DefaultLogger.Instance;
+            _listener = new TcpListener(ip, port);
             _listener.Start();
         }
 

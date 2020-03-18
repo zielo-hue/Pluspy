@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Pluspy.Abstraction.Attributes
+namespace Pluspy.Attributes
 {
     [AttributeUsage(AttributeTargets.Property)]
     public sealed class PropertyAttribute : Attribute

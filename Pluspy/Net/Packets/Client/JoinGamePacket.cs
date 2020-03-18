@@ -1,5 +1,4 @@
 ﻿using Pluspy.Entities;
-using Pluspy.Utilities.Constants;
 using System.Net.Sockets;
 
 namespace Pluspy.Net.Packets.Client

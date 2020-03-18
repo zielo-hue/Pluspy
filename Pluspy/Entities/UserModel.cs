@@ -1,4 +1,4 @@
-﻿using Pluspy.Abstraction.Net;
+﻿using Pluspy.Net;
 using Pluspy.Net.Packets.Client;
 using System.Text.Json.Serialization;
 

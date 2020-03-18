@@ -1,6 +1,5 @@
 ﻿using Pluspy.Entities;
-using Pluspy.Utilities;
-using Pluspy.Utilities.Constants;
+using Pluspy.Constants;
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;

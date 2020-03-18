@@ -1,4 +1,4 @@
-﻿namespace Pluspy.Utilities.Constants
+﻿namespace Pluspy.Constants
 {
     public static class Color
     {

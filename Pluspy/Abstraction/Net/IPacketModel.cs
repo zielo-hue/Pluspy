@@ -1,6 +1,6 @@
 ﻿using Pluspy.Net;
 
-namespace Pluspy.Abstraction.Net
+namespace Pluspy.Net
 {
     public interface IPacketModel<TPacket> where TPacket : IPacket
     {

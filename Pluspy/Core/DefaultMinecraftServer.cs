@@ -1,9 +1,8 @@
 ﻿using Pluspy.Entities;
 using Pluspy.Net;
-using Pluspy.Utilities.Constants;
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Pluspy.Core
@@ -12,20 +11,22 @@ namespace Pluspy.Core
     {
         private readonly ITcpServer _server;
         private readonly ILogger _logger;
-        private readonly ushort _port;
+        private readonly MinecraftServerConfiguration _config;
 
-        public string Version { get; } = "20w11a";
+        public string MinecraftVersion { get; } = "20w11a";
         public int ProtocolVersion { get; } = 706;
-        public int PlayerCapacity { get; } = 50;
+        public int Capacity { get; } = 50;
         public bool IsOnline { get; private set; }
         public Text Description { get; set; } = Text.Default;
         public Favicon Icon { get; set; }
 
         public DefaultMinecraftServer(MinecraftServerConfiguration config)
         {
-            _port = config.ServerPort;
+            var ip = string.IsNullOrWhiteSpace(config.ServerIp) ? IPAddress.Any : IPAddress.Parse(config.ServerIp);
+
+            _config = config;
             _logger = DefaultLogger.Instance;
-            _server = new DefaultTcpServer(new DefaultTcpConnection(_logger), _logger, _port);
+            _server = new DefaultTcpServer(ip, config.ServerPort);
         }
 
         public void Start()
@@ -39,8 +40,8 @@ namespace Pluspy.Core
                 _logger.LogWarning($"No favicon found. To enable favicons, save a 64x64 file called \"favicon.png\" into the server's directory.");
 
             _ = Task.Run(_server.Start);
-            _logger.LogInformation($"Default server on port {_port}...");
-            _logger.LogInformation($"Minecraft Version: {Version}");
+            _logger.LogInformation($"Default server on port {_config.ServerPort}...");
+            _logger.LogInformation($"Minecraft Version: {MinecraftVersion}");
             _logger.LogInformation($"Protocol Version: {ProtocolVersion}");
         }
 
@@ -49,6 +50,11 @@ namespace Pluspy.Core
             _logger.LogInformation($"Stopping the server...");
             _server.Stop();
             _logger.LogInformation("Server stopped.");
+            _server.Dispose();
+        }
+
+        public void Dispose()
+        {
             _server.Dispose();
         }
     }

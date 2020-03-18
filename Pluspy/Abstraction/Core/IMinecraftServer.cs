@@ -1,16 +1,15 @@
 ﻿using Pluspy.Entities;
+using Pluspy.Net;
 
 namespace Pluspy.Core
 {
-    public interface IMinecraftServer
+    public interface IMinecraftServer : ITcpServer
     {
-        string Version { get; }
-        int ProtocolVersion { get; }
-        int PlayerCapacity { get; }
         bool IsOnline { get; }
+        string MinecraftVersion { get; }
+        int ProtocolVersion { get; }
+        int Capacity { get; }
         Text Description { get; set; }
         Favicon Icon { get; set; }
-        void Start();
-        void Stop();
     }
 }

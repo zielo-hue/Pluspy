@@ -5,7 +5,6 @@ namespace Pluspy.Core
     public sealed class DefaultLogger : ILogger
     {
         public static DefaultLogger Instance { get; } = new DefaultLogger();
-        private readonly IMinecraftServer? _server;
 
         public DefaultLogger()
         {
