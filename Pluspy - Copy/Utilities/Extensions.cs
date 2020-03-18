@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Pluspy
+namespace Pluspy.Utilities
 {
     public static class Extensions
     {
@@ -54,7 +54,7 @@ namespace Pluspy
             return bytes;
         }
 
-        public static T Read<T>(this Stream stream, bool isBigEndian = true) where T : struct
+        public static T Read<T>(this NetworkStream stream, bool isBigEndian = true) where T : struct
         {
             var result = default(T);
             var span = MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(ref result, 1));
@@ -67,7 +67,7 @@ namespace Pluspy
             return result;
         }
 
-        public static string ReadString(this Stream stream)
+        public static string ReadString(this NetworkStream stream)
         {
             var length = stream.ReadVarInt();
             Span<byte> stringBytes = stackalloc byte[length];

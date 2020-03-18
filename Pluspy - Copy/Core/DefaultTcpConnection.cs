@@ -1,18 +1,21 @@
 ﻿using Pluspy.Entities;
 using Pluspy.Net;
 using Pluspy.Net.Packets.Client;
-using Pluspy.Constants;
+using Pluspy.Net.Packets.Server;
+using Pluspy.Utilities;
+using Pluspy.Utilities.Constants;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
-using System.Text.Json;
-using System.Security.Cryptography;
-using System;
-using Pluspy.Net.Packets;
-using System.Net;
 using System.Numerics;
-using Pluspy.Net.Packets.Server;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+
 
 namespace Pluspy.Core
 {
@@ -23,9 +26,9 @@ namespace Pluspy.Core
         private TcpClient? _client;
         private NetworkStream? _stream;
 
-        public DefaultTcpConnection()
+        public DefaultTcpConnection(ILogger logger)
         {
-            _logger = DefaultLogger.Instance;
+            _logger = logger;
             _httpClient = new HttpClient();
         }
 
@@ -65,17 +68,17 @@ namespace Pluspy.Core
             {
                 var serverListPingResponsePacket = new ServerListPingResponsePacket(
                     "10w11a",
-                    protocolVersion,
+                    protocolVersion, 
                     0,
-                    50,
-                    new List<UserModel>
+                    50, 
+                    new List<UserModel> 
                     {
-                        new UserModel{Username = "JustNrik", UUID = "c41ef456-4ca6-4218-8c94-a20bd17ecc4e" }
+                        new UserModel { Username = "JustNrik", UUID = "c41ef456-4ca6-4218-8c94-a20bd17ecc4e" }
                     },
-                    new Text
+                    new Text 
                     {
-                        Content = "idk"
-                    },
+                        Content = "idk" 
+                    }, 
                     null);
 
                 serverListPingResponsePacket.WriteTo(_stream);
@@ -109,7 +112,9 @@ namespace Pluspy.Core
             else
             {
                 var username = _stream.ReadString();
-                _logger.LogDebug($"{username} is attempting to join the game.");
+
+                _logger.LogDebug($"The user {username} is attempting to join the game.");
+                _logger.LogDebug($"Retrieving UUID from mojang api...");
 
                 var rsaProvider = new RSACryptoServiceProvider();
                 Span<byte> verifyToken = stackalloc byte[4] { 1, 0, 0, 0 };
@@ -132,7 +137,16 @@ namespace Pluspy.Core
                     encryptionResponse.SharedSecret.CopyTo(inputBytes.Slice(20));
                     publicKey.CopyTo(inputBytes.Slice(20 + encryptionResponse.SharedSecret.Length));
 
-                    string serverHash = Utilities.SHA1.Digest(inputBytes);
+                    Span<byte> outputBytes = stackalloc byte[20];
+                    sha1.TryComputeHash(inputBytes, outputBytes, out _);
+                    outputBytes.Reverse();
+
+                    BigInteger serverHashInt = new BigInteger(outputBytes);
+                    string serverHash;
+                    if (serverHashInt < 0)
+                        serverHash = "-" + (-serverHashInt).ToString("x").TrimStart('0');
+                    else
+                        serverHash = serverHashInt.ToString("x").TrimStart('0');
 
                     string requestUrl = $"https://sessionserver.mojang.com/session/minecraft/hasJoined?username={username}&serverId={serverHash}";
                     var response = _httpClient.GetAsync(requestUrl).Result;
@@ -141,6 +155,7 @@ namespace Pluspy.Core
                     {
                         var user = JsonSerializer.Deserialize<UserModel>(response.Content.ReadAsStringAsync().Result);
                         string formattedUuid = Guid.ParseExact(user.UUID, "N").ToString();
+                        _logger.LogDebug(formattedUuid);
 
                         MemoryStream ms = new MemoryStream();
                         var aesTransform = new RijndaelManagedTransformCore(encryptionResponse.SharedSecret, CipherMode.CFB, encryptionResponse.SharedSecret, 128, 8, PaddingMode.None, RijndaelManagedTransformMode.Encrypt);
@@ -169,11 +184,11 @@ namespace Pluspy.Core
         private void Reset()
         {
             _logger.LogDebug($"Diconnecting the current client");
-            _client?.Client.Disconnect(true);
+            _client?.Client.Disconnect(true);   
             _logger.LogDebug("Disconnected. Waiting for new clients...");
         }
 
-        public void Dispose()
+        public void Dispose() 
         {
             _httpClient.Dispose();
         }

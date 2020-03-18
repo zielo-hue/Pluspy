@@ -9,18 +9,19 @@ namespace Pluspy
     {
         public static class SHA1
         {
-            public static string Digest(string input)
+            public static string Digest(ReadOnlySpan<byte> input)
             {
-                using var hasher = new SHA1Managed();
-                var hash = hasher.ComputeHash(Encoding.UTF8.GetBytes(input));
+                using var sha1 = new SHA1Managed();
+                Span<byte> outputSpan = stackalloc byte[20];
+                var hash = sha1.TryComputeHash(input, outputSpan, out _);
 
-                Array.Reverse(hash);
+                outputSpan.Reverse();
 
-                var bigNumbah = new BigInteger(hash);
+                var hashInteger = new BigInteger(outputSpan);
 
-                return bigNumbah < 0 
-                    ? "-" + (-bigNumbah).ToString("x").TrimStart('0')
-                    : bigNumbah.ToString("x").TrimStart('0');
+                return hashInteger < 0 
+                    ? "-" + (-hashInteger).ToString("x").TrimStart('0')
+                    : hashInteger.ToString("x").TrimStart('0');
             }
         }
     }
