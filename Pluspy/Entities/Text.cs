@@ -35,11 +35,11 @@ namespace Pluspy.Entities
         [JsonPropertyName("underlined")]
         public bool IsUnderlined { get; set; }
         [JsonPropertyName("text")]
-        public string? Content { get; set; }
+        public string Content { get; set; }
         [JsonPropertyName("color")]
-        public string? Color { get; set; }
+        public string Color { get; set; }
         [JsonPropertyName("extra")]
-        public List<Text>? Subcomponents { get; set; }
+        public List<Text> Subcomponents { get; set; }
 
         public Text AddSubcomponent(Text chat)
         {

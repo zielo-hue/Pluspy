@@ -1,5 +1,5 @@
-﻿using Pluspy.Entities;
-using System.Net.Sockets;
+﻿using Pluspy.Core;
+using Pluspy.Enums;
 
 namespace Pluspy.Net.Packets.Client
 {
@@ -31,7 +31,7 @@ namespace Pluspy.Net.Packets.Client
             _hideVerboseDebugInfo = !verboseDebugInfo;
         }
 
-        public void WriteTo(NetworkStream stream)
+        public void WriteTo(MinecraftNetworkStream stream)
         {
 
         }

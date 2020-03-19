@@ -1,8 +1,12 @@
-﻿using System.Text.Json.Serialization;
+﻿using Pluspy.Core;
+using Pluspy.Net;
+using Pluspy.Net.Packets.Client;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Pluspy.Entities
 {
-    internal class ServerListPingResponse
+    public class ServerListPingResponseModel : JsonSerializable<ServerListPingResponsePacket>
     {
         [JsonPropertyName("version")]
         public ServerListPingResponseVersion Version { get; }
@@ -14,15 +18,19 @@ namespace Pluspy.Entities
         public Text Description { get; }
 
         [JsonPropertyName("favicon")]
-        public string? FaviconString { get; }
+        public string FaviconString { get; }
 
-        public ServerListPingResponse(ServerListPingResponseVersion version, ServerListPingResponsePlayerList players,
-            Text description, string? faviconString)
+        public ServerListPingResponseModel(ServerListPingResponseVersion version, ServerListPingResponsePlayerList players,
+            Text description, string faviconString)
         {
             Version = version;
             Players = players;
             Description = description;
             FaviconString = faviconString;
+            Options = new JsonSerializerOptions 
+            { 
+                IgnoreNullValues = true
+            };
         }
     }
 }

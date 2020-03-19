@@ -1,4 +1,4 @@
-﻿namespace Pluspy.Constants
+﻿namespace Pluspy.Enums
 {
     public enum ClientPacket
     {

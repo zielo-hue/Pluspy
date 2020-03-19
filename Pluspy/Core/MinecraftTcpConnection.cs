@@ -13,26 +13,28 @@ using Pluspy.Net.Packets;
 using System.Net;
 using System.Numerics;
 using Pluspy.Net.Packets.Server;
+using Pluspy.Utilities;
+using Pluspy.Enums;
 
 namespace Pluspy.Core
 {
-    public sealed class DefaultTcpConnection : ITcpConnection
+    public sealed class MinecraftTcpConnection
     {
         private readonly ILogger _logger;
         private readonly HttpClient _httpClient;
-        private TcpClient? _client;
-        private NetworkStream? _stream;
+        private TcpClient _client;
+        private MinecraftNetworkStream _stream;
 
-        public DefaultTcpConnection()
+        public MinecraftTcpConnection()
         {
-            _logger = DefaultLogger.Instance;
+            _logger = MinecraftLogger.Instance;
             _httpClient = new HttpClient();
         }
 
         public void Handle(TcpClient client)
         {
             _client = client;
-            _stream = client.GetStream();
+            _stream = new MinecraftNetworkStream(client.GetStream());
             _stream.ReadVarInt();
 
             var packetId = _stream.ReadByte();
@@ -63,22 +65,11 @@ namespace Pluspy.Core
 
             if (isRequestingStatus)
             {
-                var serverListPingResponsePacket = new ServerListPingResponsePacket(
-                    "10w11a",
-                    protocolVersion,
-                    0,
-                    50,
-                    new List<UserModel>
-                    {
-                        new UserModel{Username = "JustNrik", UUID = "c41ef456-4ca6-4218-8c94-a20bd17ecc4e" }
-                    },
-                    new Text
-                    {
-                        Content = "idk"
-                    },
-                    null);
-
-                serverListPingResponsePacket.WriteTo(_stream);
+                new ServerListPingResponseModel(
+                    new ServerListPingResponseVersion("20w11a", protocolVersion),
+                    new ServerListPingResponsePlayerList(50, 0, null),
+                    Text.Default,
+                    default).ToPacket().WriteTo(_stream, default, default);
 
                 try
                 {
@@ -131,7 +122,7 @@ namespace Pluspy.Core
                     encryptionResponse.SharedSecret.CopyTo(inputBytes.Slice(20));
                     publicKey.CopyTo(inputBytes.Slice(20 + encryptionResponse.SharedSecret.Length));
 
-                    string serverHash = Utilities.SHA1.Digest(inputBytes);
+                    string serverHash = Encryption.SHA1.Digest(inputBytes);
 
                     string requestUrl = $"https://sessionserver.mojang.com/session/minecraft/hasJoined?username={username}&serverId={serverHash}";
                     var response = _httpClient.GetAsync(requestUrl).Result;
@@ -156,8 +147,6 @@ namespace Pluspy.Core
                     {
                         _logger.LogDebug("Session server request failed.");
                     }
-
-
                 }
                 else
                     _logger.LogDebug("Invalid verification token.");

@@ -2,7 +2,7 @@
 
 namespace Pluspy.Entities
 {
-    internal class ServerListPingResponseVersion
+    public class ServerListPingResponseVersion
     {
         [JsonPropertyName("name")]
         public string ServerVersion { get; }

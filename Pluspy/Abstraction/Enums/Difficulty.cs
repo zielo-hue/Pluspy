@@ -1,4 +1,4 @@
-﻿namespace Pluspy.Entities
+﻿namespace Pluspy.Enums
 {
     public enum Difficulty
     {

@@ -2,17 +2,19 @@
 
 namespace Pluspy.Core
 {
-    public sealed class DefaultLogger : ILogger
+    public sealed class MinecraftLogger : ILogger
     {
-        public static DefaultLogger Instance { get; } = new DefaultLogger();
+        private readonly object _lock = new object();
 
-        public DefaultLogger()
+        public static MinecraftLogger Instance { get; } = new MinecraftLogger();
+
+        private MinecraftLogger()
         {
         }
 
         public void Log(string message, LogType logType)
         {
-            lock (this)
+            lock (_lock)
             {
                 var color = Console.ForegroundColor;
 

@@ -1,10 +1,9 @@
 ﻿using System;
 using System.IO;
-using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Pluspy
+namespace Pluspy.Utilities
 {
     public static class Extensions
     {

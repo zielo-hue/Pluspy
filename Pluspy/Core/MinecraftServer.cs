@@ -3,15 +3,19 @@ using Pluspy.Net;
 using System;
 using System.IO;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 
 namespace Pluspy.Core
 {
-    public sealed class DefaultMinecraftServer : IMinecraftServer
+    public sealed class MinecraftServer 
     {
-        private readonly ITcpServer _server;
-        private readonly ILogger _logger;
         private readonly MinecraftServerConfiguration _config;
+        private readonly TcpListener _listener;
+        private readonly MinecraftTcpConnection _connection;
+        private readonly ILogger _logger;
+        private volatile bool _isDisposed = false;
+        private volatile bool _isStopped = false;
 
         public string MinecraftVersion { get; } = "20w11a";
         public int ProtocolVersion { get; } = 706;
@@ -20,13 +24,15 @@ namespace Pluspy.Core
         public Text Description { get; set; } = Text.Default;
         public Favicon Icon { get; set; }
 
-        public DefaultMinecraftServer(MinecraftServerConfiguration config)
+        public MinecraftServer(MinecraftServerConfiguration config)
         {
             var ip = string.IsNullOrWhiteSpace(config.ServerIp) ? IPAddress.Any : IPAddress.Parse(config.ServerIp);
 
             _config = config;
-            _logger = DefaultLogger.Instance;
-            _server = new DefaultTcpServer(ip, config.ServerPort);
+            _logger = MinecraftLogger.Instance;
+            _connection = new MinecraftTcpConnection();
+            _logger = MinecraftLogger.Instance;
+            _listener = new TcpListener(ip, config.ServerPort);
         }
 
         public void Start()
@@ -39,23 +45,47 @@ namespace Pluspy.Core
             else
                 _logger.LogWarning($"No favicon found. To enable favicons, save a 64x64 file called \"favicon.png\" into the server's directory.");
 
-            _ = Task.Run(_server.Start);
+            _ = Task.Run(StartServer);
             _logger.LogInformation($"Default server on port {_config.ServerPort}...");
             _logger.LogInformation($"Minecraft Version: {MinecraftVersion}");
             _logger.LogInformation($"Protocol Version: {ProtocolVersion}");
         }
 
+        private void StartServer()
+        {
+            _listener.Start();
+
+            while (!_isStopped)
+            {
+                if (_isDisposed)
+                    throw new ObjectDisposedException(GetType().Name);
+
+                var client = _listener.AcceptTcpClient();
+                _logger.LogDebug($"Accepted client: {client.Client.RemoteEndPoint}");
+                _connection.Handle(client);
+                _logger.LogDebug($"Handled client: {client.Client.RemoteEndPoint}");
+            }
+        }
+
         public void Stop()
         {
+            if (_isDisposed)
+                throw new ObjectDisposedException(GetType().Name);
+
             _logger.LogInformation($"Stopping the server...");
-            _server.Stop();
+            _listener.Stop();
+            _isStopped = true;
             _logger.LogInformation("Server stopped.");
-            _server.Dispose();
         }
 
         public void Dispose()
         {
-            _server.Dispose();
+            if (_isDisposed)
+                return;
+
+            Stop();
+            _connection.Dispose();
+            _isDisposed = true;
         }
     }
 }
