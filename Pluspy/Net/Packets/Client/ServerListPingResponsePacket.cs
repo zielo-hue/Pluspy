@@ -1,60 +1,44 @@
 ﻿using Pluspy.Entities;
-using Pluspy.Constants;
+using Pluspy.Enums;
+using Pluspy.Utilities;
 using System;
-using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.Json;
 
 namespace Pluspy.Net.Packets.Client
 {
-    public readonly struct ServerListPingResponsePacket : IPacket
+    public struct ServerListPingResponsePacket : IPacket
     {
-        private readonly string _serializedData;
+        public string SerializedData { get; private set; }
 
-        public ServerListPingResponsePacket(
-            string serverVersion, 
-            int protocolVersion, 
-            int currentPlayers, 
-            int maximumPlayers,
-            List<UserModel> onlinePlayerSample, 
-            Text serverDescription, 
-            string? faviconString = null)
+        public ServerListPingResponsePacket(ServerListPingResponseModel model)
         {
-            _serializedData = JsonSerializer.Serialize(
-                new ServerListPingResponse(
-                        new ServerListPingResponseVersion(serverVersion, protocolVersion),
-                        new ServerListPingResponsePlayerList(maximumPlayers, currentPlayers, onlinePlayerSample),
-                        serverDescription,
-                        faviconString), 
-                new JsonSerializerOptions 
-                { 
-                    IgnoreNullValues = true 
-                });
+            SerializedData = model.ToString();
         }
 
-        public void WriteTo(NetworkStream stream)
+        public State ReadFrom(NetworkStream stream, State state, PacketType type)
         {
-            var serializedDataByteCount = Encoding.UTF8.GetByteCount(_serializedData);
+            SerializedData = stream.ReadString();
+            return state;
+        }
+
+        public readonly State WriteTo(NetworkStream stream, State state, PacketType type)
+        {
+            var serializedDataByteCount = Encoding.UTF8.GetByteCount(SerializedData);
             Span<byte> dataVarIntPrefixBytes = stackalloc byte[5];
-
-            serializedDataByteCount.GetVarIntBytes(dataVarIntPrefixBytes, out int dataVarIntLength);
-
+            var dataVarIntLength = VarIntUtilities.GetBytes(serializedDataByteCount, dataVarIntPrefixBytes);
             Span<byte> lengthBytesSpan = stackalloc byte[5];
-
-            (dataVarIntLength + serializedDataByteCount + 1).GetVarIntBytes(lengthBytesSpan, out int lengthBytesLength);
-
+            var lengthBytesLength = VarIntUtilities.GetBytes(dataVarIntLength + serializedDataByteCount + 1, lengthBytesSpan);
             var lengthBytes = lengthBytesSpan[..lengthBytesLength];
-
             Span<byte> data = stackalloc byte[dataVarIntLength + lengthBytes.Length + serializedDataByteCount + 1];
 
             lengthBytes.CopyTo(data);
-
             data[lengthBytes.Length] = (int)ServerPacket.ServerListPingResponse;
-
             dataVarIntPrefixBytes[..dataVarIntLength].CopyTo(data[(lengthBytes.Length + 1)..]);
-            Encoding.UTF8.GetBytes(_serializedData, data.Slice(dataVarIntLength + lengthBytes.Length + 1));
+            Encoding.UTF8.GetBytes(SerializedData, data[(dataVarIntLength + lengthBytes.Length + 1)..]);
             stream.Write(data);
+
+            return state;
         }
     }
 }

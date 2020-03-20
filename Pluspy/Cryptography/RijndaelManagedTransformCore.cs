@@ -23,7 +23,7 @@ namespace System.Security.Cryptography
         Decrypt = 1
     }
 
-    [System.Runtime.InteropServices.ComVisible(true)]
+    [ComVisible(true)]
     public sealed class RijndaelManagedTransformCore : ICryptoTransform
     {
         private CipherMode m_cipherMode;

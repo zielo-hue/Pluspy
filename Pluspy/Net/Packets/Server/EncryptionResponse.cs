@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Sockets;
+﻿using Pluspy.Utilities;
+using System.IO;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace Pluspy.Net.Packets.Server
 {
@@ -11,7 +9,7 @@ namespace Pluspy.Net.Packets.Server
         public byte[] SharedSecret { get; private set; }
         public byte[] VerifyToken { get; private set; }
 
-        public EncryptionResponse(NetworkStream stream)
+        public EncryptionResponse(Stream stream)
         {
             SharedSecret = new byte[stream.ReadVarInt()];
             stream.Read(SharedSecret);
