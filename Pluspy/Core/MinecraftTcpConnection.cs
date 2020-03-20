@@ -10,6 +10,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text.Json;
 
@@ -104,7 +105,8 @@ namespace Pluspy.Core
                 _logger.LogDebug($"{username} is attempting to join the game.");
 
                 var rsaProvider = new RSACryptoServiceProvider();
-                var verifyToken = MemoryPool<byte>.Shared.Rent(4).Memory;
+                var verifyTokenRented = MemoryPool<byte>.Shared.Rent(4);
+                var verifyToken = verifyTokenRented.Memory.Slice(0, 4);
                 var publicKey = rsaProvider.ExportSubjectPublicKeyInfo().AsMemory();
                 var encryptionRequest = new EncryptionRequest(publicKey, verifyToken);
 
@@ -134,17 +136,18 @@ namespace Pluspy.Core
                     if (response.StatusCode == HttpStatusCode.OK)
                     {
                         var user = JsonSerializer.Deserialize<UserModel>(response.Content.ReadAsStringAsync().Result);
-                        var formattedUUID = Guid.ParseExact(user.UUID, "N").ToString();
+                        var userGuid = Guid.ParseExact(user.UUID, "N");
+
                         var aesTransform = new RijndaelManagedTransformCore(encryptionResponse.SharedSecret, CipherMode.CFB, encryptionResponse.SharedSecret, 128, 8, PaddingMode.None, RijndaelManagedTransformMode.Encrypt);
                         var cipherStream = new CryptoStream(_stream, aesTransform, CryptoStreamMode.Write);
 
                         Span<byte> loginSuccessSpan = stackalloc byte[1024];
                         var writer = new PacketWriter(loginSuccessSpan, 0x02);
 
-                        writer.WriteString(formattedUUID);
+                        writer.WriteBytes(MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(ref userGuid, 1)));
                         writer.WriteString(user.Username);
                         writer.WriteTo(cipherStream);
-                        _logger.LogDebug($"{user.Username}({formattedUUID}) has logged in!");
+                        _logger.LogDebug($"{user.Username}({userGuid}) has logged in!");
                     }
                     else
                         _logger.LogDebug("Session server request failed.");

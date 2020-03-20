@@ -39,11 +39,11 @@ namespace Pluspy.Net.Packets
         public readonly void WriteTo(Stream stream)
         {
             Span<byte> idSpan = stackalloc byte[5];
-            var bytesWritten = VarIntUtilities.GetBytes(_id, idSpan);
+            var idSpanBytesWritten = VarIntUtilities.GetBytes(_id, idSpan);
 
-            stream.WriteVarInt(_bytesWritten + bytesWritten);
-            stream.Write(idSpan[..bytesWritten]);
-            stream.Write(_packetSpan[..bytesWritten]);
+            stream.WriteVarInt(_bytesWritten + idSpanBytesWritten);
+            stream.Write(idSpan[..idSpanBytesWritten]);
+            stream.Write(_packetSpan[.._bytesWritten]);
         }
     }
 }
