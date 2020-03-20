@@ -7,6 +7,7 @@ namespace Pluspy.Entities
     {
         public static Text Default { get; } = new Text  
         {
+            Content = string.Empty,
             Color = "white",
             Subcomponents = new List<Text>()
             {
@@ -15,11 +16,6 @@ namespace Pluspy.Entities
                     Content = "Default Server",
                     IsBold = true,
                     Color = "aqua"
-                },
-                new Text
-                {
-                    Content = "Server",
-                    Color = "white"
                 }
             }
         };

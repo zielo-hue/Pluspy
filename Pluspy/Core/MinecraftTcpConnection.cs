@@ -69,10 +69,7 @@ namespace Pluspy.Core
                 new ServerListPingResponseModel(
                     new ServerListPingResponseVersion("20w12a", _server.ProtocolVersion),
                     new ServerListPingResponsePlayerList(50, 0, null),
-                    new Text
-                    {
-                        Content = "Test"
-                    },
+                    Text.Default,
                     default).ToPacket().WriteTo(_stream, default, default);
 
                 try
