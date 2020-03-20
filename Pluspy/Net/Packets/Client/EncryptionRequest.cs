@@ -1,9 +1,6 @@
-﻿using Pluspy.Core;
-using Pluspy.Enums;
+﻿using Pluspy.Enums;
 using System;
-using System.Collections.Generic;
 using System.Net.Sockets;
-using System.Text;
 
 namespace Pluspy.Net.Packets.Client
 {

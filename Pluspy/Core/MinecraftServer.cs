@@ -1,5 +1,4 @@
 ﻿using Pluspy.Entities;
-using Pluspy.Net;
 using System;
 using System.IO;
 using System.Net;
@@ -30,7 +29,7 @@ namespace Pluspy.Core
 
             _config = config;
             _logger = MinecraftLogger.Instance;
-            _connection = new MinecraftTcpConnection();
+            _connection = new MinecraftTcpConnection(this);
             _logger = MinecraftLogger.Instance;
             _listener = new TcpListener(ip, config.ServerPort);
         }

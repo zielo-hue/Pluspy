@@ -17,15 +17,17 @@ namespace Pluspy.Core
 {
     public sealed class MinecraftTcpConnection
     {
+        private readonly MinecraftServer _server;
         private readonly MinecraftLogger _logger;
         private readonly HttpClient _httpClient;
         private TcpClient _client;
         private NetworkStream _stream;
 
-        public MinecraftTcpConnection()
+        public MinecraftTcpConnection(MinecraftServer server)
         {
-            _logger = MinecraftLogger.Instance;
             _httpClient = new HttpClient();
+            _logger = MinecraftLogger.Instance;
+            _server = server;
         }
 
         public void Handle(TcpClient client)
@@ -63,7 +65,7 @@ namespace Pluspy.Core
             if (isRequestingStatus)
             {
                 new ServerListPingResponseModel(
-                    new ServerListPingResponseVersion("20w11a", protocolVersion),
+                    new ServerListPingResponseVersion("20w12a", _server.ProtocolVersion),
                     new ServerListPingResponsePlayerList(50, 0, null),
                     Text.Default,
                     default).ToPacket().WriteTo(_stream, default, default);
@@ -71,6 +73,7 @@ namespace Pluspy.Core
                 try
                 {
                     _stream.ReadVarInt();
+
                     var latencyPacketId = _stream.ReadByte();
 
                     if (latencyPacketId != (int)ClientPacket.ServerListLatency)
@@ -97,53 +100,54 @@ namespace Pluspy.Core
             else
             {
                 var username = _stream.ReadString();
+
                 _logger.LogDebug($"{username} is attempting to join the game.");
 
                 var rsaProvider = new RSACryptoServiceProvider();
                 var verifyToken = MemoryPool<byte>.Shared.Rent(4).Memory;
                 var publicKey = rsaProvider.ExportSubjectPublicKeyInfo().AsMemory();
                 var encryptionRequest = new EncryptionRequest(publicKey, verifyToken);
+
                 encryptionRequest.WriteTo(_stream, default, default);
 
                 var length = _stream.ReadVarInt();
                 var id = _stream.ReadVarInt();
 
                 var encryptionResponse = new EncryptionResponse(_stream);
-                encryptionResponse.Decrypt(rsaProvider);
 
+                encryptionResponse.Decrypt(rsaProvider);
                 _logger.LogDebug("Checking verification token...");
+
                 if (verifyToken.Span.SequenceEqual(encryptionResponse.VerifyToken))
                 {
                     _logger.LogDebug("Token verified.");
-                    Span<byte> inputBytes = stackalloc byte[20 + encryptionResponse.SharedSecret.Length + publicKey.Length];
-                    encryptionResponse.SharedSecret.CopyTo(inputBytes.Slice(20));
-                    publicKey.Span.CopyTo(inputBytes[(20 + encryptionResponse.SharedSecret.Length)..]);
 
-                    string serverHash = Encryption.SHA1.Digest(inputBytes);
+                    Span<byte> inputBytes = stackalloc byte[encryptionResponse.SharedSecret.Length + publicKey.Length + 20];
 
-                    string requestUrl = $"https://sessionserver.mojang.com/session/minecraft/hasJoined?username={username}&serverId={serverHash}";
+                    encryptionResponse.SharedSecret.CopyTo(inputBytes[20..]);
+                    publicKey.Span.CopyTo(inputBytes[(encryptionResponse.SharedSecret.Length + 20)..]);
+
+                    var serverHash = Encryption.SHA1.Digest(inputBytes);
+                    var requestUrl = $"https://sessionserver.mojang.com/session/minecraft/hasJoined?username={username}&serverId={serverHash}";
                     var response = _httpClient.GetAsync(requestUrl).Result;
 
                     if (response.StatusCode == HttpStatusCode.OK)
                     {
                         var user = JsonSerializer.Deserialize<UserModel>(response.Content.ReadAsStringAsync().Result);
-                        string formattedUuid = Guid.ParseExact(user.UUID, "N").ToString();
-
+                        var formattedUUID = Guid.ParseExact(user.UUID, "N").ToString();
                         var aesTransform = new RijndaelManagedTransformCore(encryptionResponse.SharedSecret, CipherMode.CFB, encryptionResponse.SharedSecret, 128, 8, PaddingMode.None, RijndaelManagedTransformMode.Encrypt);
                         var cipherStream = new CryptoStream(_stream, aesTransform, CryptoStreamMode.Write);
 
                         Span<byte> loginSuccessSpan = stackalloc byte[1024];
-                        PacketWriter writer = new PacketWriter(loginSuccessSpan, 0x02);
-                        writer.WriteString(formattedUuid);
+                        var writer = new PacketWriter(loginSuccessSpan, 0x02);
+
+                        writer.WriteString(formattedUUID);
                         writer.WriteString(user.Username);
                         writer.WriteTo(cipherStream);
-
-                        _logger.LogDebug($"{user.Username}({formattedUuid}) has logged in!");
+                        _logger.LogDebug($"{user.Username}({formattedUUID}) has logged in!");
                     }
                     else
-                    {
                         _logger.LogDebug("Session server request failed.");
-                    }
                 }
                 else
                     _logger.LogDebug("Invalid verification token.");
