@@ -1,5 +1,7 @@
-﻿using Pluspy.Core;
-using Pluspy.Enums;
+﻿using Pluspy.Enums;
+using System;
+using System.Net.Sockets;
+#pragma warning disable 
 
 namespace Pluspy.Net.Packets.Client
 {
@@ -31,9 +33,12 @@ namespace Pluspy.Net.Packets.Client
             _hideVerboseDebugInfo = !verboseDebugInfo;
         }
 
-        public void WriteTo(MinecraftNetworkStream stream)
-        {
+        public State ReadFrom(NetworkStream stream, State state, PacketType type)
+            => state;
 
+        public State WriteTo(NetworkStream stream, State state, PacketType type)
+        {
+            throw new NotImplementedException();
         }
     }
 }

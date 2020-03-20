@@ -13,12 +13,12 @@ namespace Pluspy.Core
         private readonly MinecraftServerConfiguration _config;
         private readonly TcpListener _listener;
         private readonly MinecraftTcpConnection _connection;
-        private readonly ILogger _logger;
+        private readonly MinecraftLogger _logger;
         private volatile bool _isDisposed = false;
         private volatile bool _isStopped = false;
 
-        public string MinecraftVersion { get; } = "20w11a";
-        public int ProtocolVersion { get; } = 706;
+        public string MinecraftVersion { get; } = "20w12a";
+        public int ProtocolVersion { get; } = 707;
         public int Capacity { get; } = 50;
         public bool IsOnline { get; private set; }
         public Text Description { get; set; } = Text.Default;

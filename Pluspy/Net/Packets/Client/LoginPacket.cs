@@ -1,6 +1,9 @@
 ﻿using Pluspy.Core;
 using Pluspy.Entities;
 using Pluspy.Enums;
+using Pluspy.Utilities;
+using System.Net.Sockets;
+using System.Text;
 
 namespace Pluspy.Net.Packets.Client
 {
@@ -15,17 +18,21 @@ namespace Pluspy.Net.Packets.Client
             UUID = model.UUID;
         }
 
-        public State ReadFrom(MinecraftNetworkStream stream, State state, PacketType type)
+        public State ReadFrom(NetworkStream stream, State state, PacketType type)
         {
             Username = stream.ReadString();
             UUID = stream.ReadString();
             return state;
         }
 
-        public readonly State WriteTo(MinecraftNetworkStream stream, State state, PacketType type)
+        public readonly State WriteTo(NetworkStream stream, State state, PacketType type)
         {
-            stream.WriteString(Username);
-            stream.WriteString(UUID);
+            var writer = new PacketWriter();
+
+            writer.WriteString(Username);
+            writer.WriteBytes(Encoding.UTF8.GetBytes(UUID));
+            writer.WriteTo(stream);
+
             return State.Play;
         }
     }

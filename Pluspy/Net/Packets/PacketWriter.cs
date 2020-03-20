@@ -7,9 +7,9 @@ namespace Pluspy.Net.Packets
 {
     public ref struct PacketWriter
     {
-        private int _id;
+        private readonly int _id;
+        private readonly Span<byte> _packetSpan;
         private int _bytesWritten;
-        private Span<byte> _packetSpan;
 
         public PacketWriter(Span<byte> packetSpan, int id)
         {
@@ -19,34 +19,31 @@ namespace Pluspy.Net.Packets
         }
 
         public void WriteVarInt(int value)
-        {
-            Extensions.GetVarIntBytes(value, _packetSpan.Slice(_bytesWritten), out int bytesWritten);
-            _bytesWritten += bytesWritten;
-        }
+            => _bytesWritten += VarIntUtilities.GetBytes(value, _packetSpan[_bytesWritten..]);
 
         public void WriteBytes(Span<byte> bytes)
         {
-            bytes.CopyTo(_packetSpan.Slice(_bytesWritten));
+            bytes.CopyTo(_packetSpan[_bytesWritten..]);
             _bytesWritten += bytes.Length;
         }
 
         public void WriteString(string str)
         {
-            int byteLength = Encoding.UTF8.GetByteCount(str);
+            var byteLength = Encoding.UTF8.GetByteCount(str);
             WriteVarInt(byteLength);
 
-            Encoding.UTF8.GetBytes(str, _packetSpan.Slice(_bytesWritten));
+            Encoding.UTF8.GetBytes(str, _packetSpan[_bytesWritten..]);
             _bytesWritten += byteLength;
         }
 
-        public void WriteTo(Stream stream)
+        public readonly void WriteTo(Stream stream)
         {
             Span<byte> idSpan = stackalloc byte[5];
-            Extensions.GetVarIntBytes(_id, idSpan, out int bytesWritten);
+            var bytesWritten = VarIntUtilities.GetBytes(_id, idSpan);
 
             stream.WriteVarInt(_bytesWritten + bytesWritten);
-            stream.Write(idSpan.Slice(0, bytesWritten));
-            stream.Write(_packetSpan.Slice(0, _bytesWritten));
+            stream.Write(idSpan[..bytesWritten]);
+            stream.Write(_packetSpan[..bytesWritten]);
         }
     }
 }

@@ -1,11 +1,11 @@
-﻿using Pluspy.Core;
-using Pluspy.Enums;
+﻿using Pluspy.Enums;
+using System.Net.Sockets;
 
 namespace Pluspy.Net
 {
     public interface IPacket
     {
-        State WriteTo(MinecraftNetworkStream stream, State state, PacketType type);
-        State ReadFrom(MinecraftNetworkStream stream, State state, PacketType type);
+        State WriteTo(NetworkStream stream, State state, PacketType type);
+        State ReadFrom(NetworkStream stream, State state, PacketType type);
     }
 }

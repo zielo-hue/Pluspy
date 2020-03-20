@@ -1,36 +1,42 @@
-﻿using System;
+﻿using Pluspy.Core;
+using Pluspy.Enums;
+using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
 
 namespace Pluspy.Net.Packets.Client
 {
-    public readonly ref struct EncryptionRequest
+    public struct EncryptionRequest : IPacket
     {
-        private readonly Span<byte> _publicKey;
-        private readonly Span<byte> _verifyToken;
+        private readonly Memory<byte> _publicKey;
+        private readonly Memory<byte> _verifyToken;
 
-        public EncryptionRequest(Span<byte> publicKey, Span<byte> verifyToken)
+        public EncryptionRequest(Memory<byte> publicKey, Memory<byte> verifyToken)
         {
             _publicKey = publicKey;
             _verifyToken = verifyToken;
         }
 
-        public void WriteTo(NetworkStream stream)
+        public State ReadFrom(NetworkStream stream, State state, PacketType type)
+            => state;
+
+        public State WriteTo(NetworkStream stream, State state, PacketType type)
         {
             Span<byte> packetBytes = stackalloc byte[_publicKey.Length + _verifyToken.Length + 256];
-            PacketWriter writer = new PacketWriter(packetBytes, 0x01);
+            var writer = new PacketWriter(packetBytes, 0x01);
 
             writer.WriteVarInt(20);
             writer.WriteBytes(stackalloc byte[20]);
 
             writer.WriteVarInt(_publicKey.Length);
-            writer.WriteBytes(_publicKey);
+            writer.WriteBytes(_publicKey.Span);
 
             writer.WriteVarInt(_verifyToken.Length);
-            writer.WriteBytes(_verifyToken);
+            writer.WriteBytes(_verifyToken.Span);
 
             writer.WriteTo(stream);
+            return state;
         }
     }
 }

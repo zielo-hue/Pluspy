@@ -5,7 +5,7 @@ namespace Pluspy.Entities
 {
     public readonly struct Favicon
     {
-        public string? FaviconString { get; }
+        public string FaviconString { get; }
 
         private Favicon(string base64String)
         {
@@ -15,9 +15,9 @@ namespace Pluspy.Entities
             FaviconString = base64String;
         }
 
-        public override string? ToString()
+        public override string ToString()
             => FaviconString;
-        public static implicit operator string?(Favicon favicon)
+        public static implicit operator string(Favicon favicon)
             => favicon.FaviconString;
         public static Favicon FromBase64String(string base64String)
             => new Favicon(base64String);

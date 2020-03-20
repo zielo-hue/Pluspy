@@ -2,7 +2,7 @@
 
 namespace Pluspy.Core
 {
-    public sealed class MinecraftLogger : ILogger
+    public sealed class MinecraftLogger
     {
         private readonly object _lock = new object();
 
@@ -31,5 +31,16 @@ namespace Pluspy.Core
                 Console.ForegroundColor = color;
             }
         }
+
+        public void LogInformation(string message)
+            => Log(message, LogType.Information);
+        public void LogWarning(string message)
+            => Log(message, LogType.Warning);
+        public void LogCritical(string message)
+            => Log(message, LogType.Critical);
+        public void LogError(string message)
+            => Log(message, LogType.Error);
+        public void LogDebug(string message)
+            => Log(message, LogType.Debug);
     }
 }
