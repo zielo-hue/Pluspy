@@ -14,6 +14,7 @@ namespace Pluspy.Net.Packets.Client
         public ServerListPingResponsePacket(ServerListPingResponseModel model)
         {
             SerializedData = model.ToString();
+            Console.WriteLine(SerializedData);
         }
 
         public State ReadFrom(NetworkStream stream, State state, PacketType type)
@@ -24,19 +25,24 @@ namespace Pluspy.Net.Packets.Client
 
         public readonly State WriteTo(NetworkStream stream, State state, PacketType type)
         {
-            var serializedDataByteCount = Encoding.UTF8.GetByteCount(SerializedData);
-            Span<byte> dataVarIntPrefixBytes = stackalloc byte[5];
-            var dataVarIntLength = VarIntUtilities.GetBytes(serializedDataByteCount, dataVarIntPrefixBytes);
-            Span<byte> lengthBytesSpan = stackalloc byte[5];
-            var lengthBytesLength = VarIntUtilities.GetBytes(dataVarIntLength + serializedDataByteCount + 1, lengthBytesSpan);
-            var lengthBytes = lengthBytesSpan[..lengthBytesLength];
-            Span<byte> data = stackalloc byte[dataVarIntLength + lengthBytes.Length + serializedDataByteCount + 1];
+            //var serializedDataByteCount = Encoding.UTF8.GetByteCount(SerializedData);
+            //Span<byte> dataVarIntPrefixBytes = stackalloc byte[5];
+            //var dataVarIntLength = VarIntUtilities.GetBytes(serializedDataByteCount, dataVarIntPrefixBytes);
+            //Span<byte> lengthBytesSpan = stackalloc byte[5];
+            //var lengthBytesLength = VarIntUtilities.GetBytes(dataVarIntLength + serializedDataByteCount + 1, lengthBytesSpan);
+            //var lengthBytes = lengthBytesSpan[..lengthBytesLength];
+            //Span<byte> data = stackalloc byte[dataVarIntLength + lengthBytes.Length + serializedDataByteCount + 1];
 
-            lengthBytes.CopyTo(data);
-            data[lengthBytes.Length] = (int)ServerPacket.ServerListPingResponse;
-            dataVarIntPrefixBytes[..dataVarIntLength].CopyTo(data[(lengthBytes.Length + 1)..]);
-            Encoding.UTF8.GetBytes(SerializedData, data[(dataVarIntLength + lengthBytes.Length + 1)..]);
-            stream.Write(data);
+            //lengthBytes.CopyTo(data);
+            //data[lengthBytes.Length] = (int)ServerPacket.ServerListPingResponse;
+            //dataVarIntPrefixBytes[..dataVarIntLength].CopyTo(data[(lengthBytes.Length + 1)..]);
+            //Encoding.UTF8.GetBytes(SerializedData, data[(dataVarIntLength + lengthBytes.Length + 1)..]);
+            //stream.Write(data);
+
+            int dataByteCount = Encoding.UTF8.GetByteCount(SerializedData);
+            PacketWriter writer = new PacketWriter(stackalloc byte[dataByteCount + 5], (int)ServerPacket.ServerListPingResponse);
+            writer.WriteString(SerializedData);
+            writer.WriteTo(stream);
 
             return state;
         }

@@ -1,6 +1,7 @@
 ﻿using Pluspy.Utilities;
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Pluspy.Net.Packets
@@ -25,6 +26,13 @@ namespace Pluspy.Net.Packets
         {
             bytes.CopyTo(_packetSpan[_bytesWritten..]);
             _bytesWritten += bytes.Length;
+        }
+
+        public void Write<T>(T value) where T : struct
+        {
+            Span<byte> valueSpan = MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(ref value, 1));
+            valueSpan.CopyTo(_packetSpan[_bytesWritten..]);
+            _bytesWritten += valueSpan.Length;
         }
 
         public void WriteString(string str)

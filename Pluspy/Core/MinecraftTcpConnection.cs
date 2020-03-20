@@ -6,6 +6,7 @@ using Pluspy.Net.Packets.Server;
 using Pluspy.Utilities;
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -68,7 +69,10 @@ namespace Pluspy.Core
                 new ServerListPingResponseModel(
                     new ServerListPingResponseVersion("20w12a", _server.ProtocolVersion),
                     new ServerListPingResponsePlayerList(50, 0, null),
-                    Text.Default,
+                    new Text
+                    {
+                        Content = "Test"
+                    },
                     default).ToPacket().WriteTo(_stream, default, default);
 
                 try
@@ -85,9 +89,13 @@ namespace Pluspy.Core
 
                     _logger.LogDebug($"Received ClientPacket: {ClientPacket.ServerListLatency}");
 
-                    var playload = _stream.Read<long>();
+                    var payload = _stream.Read<long>();
 
-                    _logger.LogDebug($"Received {playload}");
+                    _logger.LogDebug($"Received {payload}");
+
+                    PacketWriter writer = new PacketWriter(stackalloc byte[8], 0x1);
+                    writer.Write(payload);
+                    writer.WriteTo(_stream);
                 }
                 catch (EndOfStreamException)
                 {
