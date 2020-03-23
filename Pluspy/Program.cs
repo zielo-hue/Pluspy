@@ -1,5 +1,6 @@
 ﻿using Pluspy.Core;
 using Pluspy.Entities;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -15,7 +16,15 @@ namespace Pluspy
             var configObj = MinecraftServerConfiguration.FromFile("server.properties");
             var server = new MinecraftServer(configObj);
 
-            server.Start();
+            try
+            {
+                server.Start();
+                await Task.Delay(-1);
+            } 
+            catch (Exception e) 
+            {
+                Console.WriteLine(e);
+            }
 
             await Task.Delay(-1);
         }

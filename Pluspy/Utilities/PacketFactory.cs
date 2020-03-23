@@ -1,6 +1,7 @@
 ﻿using Pluspy.Core;
 using Pluspy.Net;
 using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 
 namespace Pluspy.Utilities
@@ -31,6 +32,21 @@ namespace Pluspy.Utilities
             }
 
             return _func(model);
+        }
+    }
+
+    public static class PacketFactory
+    {
+        private static readonly Dictionary<Type, Func<IPacket>> _dict = new Dictionary<Type, Func<IPacket>>();
+        public static IPacket CreateInstance(Type type)
+        {
+            if (_dict.TryGetValue(type, out var func))
+                return func();
+
+            var newFunc = Expression.Lambda<Func<IPacket>>(Expression.Convert(Expression.New(type), typeof(IPacket))).Compile();
+
+            _dict.Add(type, newFunc);
+            return newFunc();
         }
     }
 }

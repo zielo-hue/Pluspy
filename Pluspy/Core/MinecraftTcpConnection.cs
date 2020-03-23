@@ -1,5 +1,6 @@
 ﻿using Pluspy.Entities;
 using Pluspy.Enums;
+using Pluspy.Net;
 using Pluspy.Net.Packets;
 using Pluspy.Net.Packets.Client;
 using Pluspy.Net.Packets.Server;
@@ -23,7 +24,7 @@ namespace Pluspy.Core
         private readonly MinecraftLogger _logger;
         private readonly HttpClient _httpClient;
         private TcpClient _client;
-        private NetworkStream _stream;
+        private MinecraftStream _stream;
 
         public MinecraftTcpConnection(MinecraftServer server)
         {
@@ -35,7 +36,7 @@ namespace Pluspy.Core
         public void Handle(TcpClient client)
         {
             _client = client;
-            _stream = client.GetStream();
+            _stream = new MinecraftStream(client.GetStream());
             _stream.ReadVarInt();
 
             var packetId = _stream.ReadByte();
@@ -51,24 +52,28 @@ namespace Pluspy.Core
                 return;
             }
 
+            var handshake = new HandshakePacket();
+            handshake.ReadFrom(_stream, default, default);
+/* 
             var protocolVersion = _stream.ReadVarInt();
             var serverAddress = _stream.ReadString();
             var serverPort = _stream.Read<ushort>();
             var isRequestingStatus = _stream.ReadVarInt() == 1;
-
+*/
             _logger.LogDebug(
-                $"New client connecting with protocol version {protocolVersion}, " +
-                $"using server address {serverAddress}:{serverPort}, " +
-                $"and {(isRequestingStatus ? "is requesting status information" : "is requesting to login")}.");
+                $"New client connecting with protocol version {handshake.ProtocolVersion}, " +
+                $"using server address {handshake.ServerHostname}:{handshake.ServerPort}, " +
+                $"and {(handshake.NextState == State.Status ? "is requesting status information" : "is requesting to login")}.");
 
-            _stream.ReadVarInt();
-            _stream.ReadByte();
-
-            if (isRequestingStatus)
+            if (handshake.NextState == State.Status)
             {
-                new ServerListPingResponseModel(
-                    new ServerListPingResponseVersion("20w12a", _server.ProtocolVersion),
-                    new ServerListPingResponsePlayerList(50, 0, null),
+                var model = new ServerModel(
+                    new ServerVersion("20w12a", _server.ProtocolVersion),
+                    new ServerPlayerList(50, 0, 
+                        new List<UserModel>() 
+                        { 
+                            new UserModel("justnrik", "c41ef4564ca642188c94a20bd17ecc4e") 
+                        }),
                     Text.Default,
                     default).ToPacket().WriteTo(_stream, default, default);
 
@@ -81,61 +86,68 @@ namespace Pluspy.Core
                     if (latencyPacketId != (int)ClientPacket.ServerListLatency)
                     {
                         _logger.LogInformation($"Closing socket. Client did not request latency detection.");
+                        Reset();
                         return;
                     }
 
-                    _logger.LogDebug($"Received ClientPacket: {ClientPacket.ServerListLatency}");
+                    var pingPacket = new StatusPingPacket();
 
-                    var payload = _stream.Read<long>();
-
-                    _logger.LogDebug($"Received {payload}");
-
-                    PacketWriter writer = new PacketWriter(stackalloc byte[8], 0x1);
-                    writer.Write(payload);
-                    writer.WriteTo(_stream);
+                    pingPacket.ReadFrom(_stream, default, default);
+                    _logger.LogDebug($"Received {pingPacket.Time}");
+                    pingPacket.WriteTo(_stream, default, default);
+                    _logger.LogInformation($"Successfully handled Status packet.");
                 }
                 catch (EndOfStreamException)
                 {
                     _logger.LogDebug("End of Stream.");
                 }
-                finally
+                catch (Exception e)
                 {
-                    Reset();
+                    _logger.LogError($"An error ocurred: {e}");
                 }
+
+                Reset();
             }
             else
             {
+                /* 
                 var username = _stream.ReadString();
 
                 _logger.LogDebug($"{username} is attempting to join the game.");
+*/
+                var loginRequest = new LoginStartPacket();
+
+                loginRequest.ReadFrom(_stream, default, default);
+                _logger.LogDebug($" {loginRequest.Username} is attempting to join the game.");
 
                 var rsaProvider = new RSACryptoServiceProvider();
                 var verifyTokenRented = MemoryPool<byte>.Shared.Rent(4);
-                var verifyToken = verifyTokenRented.Memory.Slice(0, 4);
-                var publicKey = rsaProvider.ExportSubjectPublicKeyInfo().AsMemory();
-                var encryptionRequest = new EncryptionRequest(publicKey, verifyToken);
+                var verifyToken = verifyTokenRented.Memory[..4].ToArray();
+                var publicKey = rsaProvider.ExportSubjectPublicKeyInfo();
+                var encryptionRequest = new EncryptionKeyRequestPacket(publicKey, verifyToken);
 
                 encryptionRequest.WriteTo(_stream, default, default);
+                verifyTokenRented.Dispose();
 
-                var length = _stream.ReadVarInt();
-                var id = _stream.ReadVarInt();
+                //var length = _stream.ReadVarInt();
+                //var id = _stream.ReadVarInt();
+                var encryptionResponse = new EncryptionKeyResponsePacket();
 
-                var encryptionResponse = new EncryptionResponse(_stream);
-
+                encryptionResponse.ReadFrom(_stream, default, default);
                 encryptionResponse.Decrypt(rsaProvider);
                 _logger.LogDebug("Checking verification token...");
 
-                if (verifyToken.Span.SequenceEqual(encryptionResponse.VerifyToken))
+                if (verifyToken.AsSpan().SequenceEqual(encryptionResponse.VerificationToken))
                 {
                     _logger.LogDebug("Token verified.");
 
                     Span<byte> inputBytes = stackalloc byte[encryptionResponse.SharedSecret.Length + publicKey.Length + 20];
 
                     encryptionResponse.SharedSecret.CopyTo(inputBytes[20..]);
-                    publicKey.Span.CopyTo(inputBytes[(encryptionResponse.SharedSecret.Length + 20)..]);
+                    publicKey.CopyTo(inputBytes[(encryptionResponse.SharedSecret.Length + 20)..]);
 
                     var serverHash = Encryption.SHA1.Digest(inputBytes);
-                    var requestUrl = $"https://sessionserver.mojang.com/session/minecraft/hasJoined?username={username}&serverId={serverHash}";
+                    var requestUrl = $"https://sessionserver.mojang.com/session/minecraft/hasJoined?username={loginRequest.Username}&serverId={serverHash}";
                     var response = _httpClient.GetAsync(requestUrl).Result;
 
                     if (response.StatusCode == HttpStatusCode.OK)
@@ -144,7 +156,7 @@ namespace Pluspy.Core
                         var userGuid = Guid.ParseExact(user.UUID, "N");
 
                         var aesTransform = new RijndaelManagedTransformCore(encryptionResponse.SharedSecret, CipherMode.CFB, encryptionResponse.SharedSecret, 128, 8, PaddingMode.None, RijndaelManagedTransformMode.Encrypt);
-                        var cipherStream = new CryptoStream(_stream, aesTransform, CryptoStreamMode.Write);
+                        var cipherStream = new CryptoStream(_stream.BaseStream, aesTransform, CryptoStreamMode.Write);
 
                         Span<byte> loginSuccessSpan = stackalloc byte[1024];
                         var writer = new PacketWriter(loginSuccessSpan, 0x02);

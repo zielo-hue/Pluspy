@@ -11,8 +11,4 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="Net\Packets\Server\" />
-  </ItemGroup>
-
 </Project>

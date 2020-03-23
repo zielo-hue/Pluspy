@@ -139,6 +139,7 @@ namespace Pluspy.Entities
 
         [Property("server-port")]
         public ushort ServerPort { get; }
+        public bool EnableEncryption { get; internal set; }
 
         public static MinecraftServerConfiguration FromFile(string path)
         {

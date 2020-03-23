@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Pluspy.Entities
 {
-    public class ServerListPingResponsePlayerList
+    public class ServerPlayerList
     {
         [JsonPropertyName("max")]
         public int MaximumPlayers { get; }
@@ -12,13 +12,13 @@ namespace Pluspy.Entities
         public int OnlinePlayers { get; }
 
         [JsonPropertyName("sample")]
-        public List<UserModel> OnlinePlayerSample { get; }
+        public List<UserModel> Players { get; }
 
-        public ServerListPingResponsePlayerList(int maxPlayers, int onlinePlayers, List<UserModel> sample)
+        public ServerPlayerList(int maxPlayers, int onlinePlayers, List<UserModel> players)
         {
             MaximumPlayers = maxPlayers;
             OnlinePlayers = onlinePlayers;
-            OnlinePlayerSample = sample;
+            Players = players;
         }
     }
 }

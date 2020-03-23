@@ -43,15 +43,12 @@ namespace Pluspy.Utilities
             return result;
         }
 
-        public static T Read<T>(this Stream stream, bool isBigEndian = true) where T : unmanaged
+        public static T Read<T>(this Stream stream) where T : unmanaged
         {
             var result = default(T);
             var span = MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(ref result, 1));
 
             stream.Read(span);
-
-            if (isBigEndian && BitConverter.IsLittleEndian) 
-                span.Reverse();
 
             return result;
         }

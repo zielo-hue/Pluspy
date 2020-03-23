@@ -1,20 +1,26 @@
 ﻿using Pluspy.Entities;
+using Pluspy.Enums;
+using Pluspy.Net;
+using Pluspy.Net.Packets.Client;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace Pluspy.Core
 {
-    public sealed class MinecraftServer 
+    public sealed partial class MinecraftServer 
     {
         private readonly MinecraftServerConfiguration _config;
         private readonly TcpListener _listener;
         private readonly MinecraftTcpConnection _connection;
         private readonly MinecraftLogger _logger;
+        private readonly object _networkLock = new object();
         private volatile bool _isDisposed = false;
         private volatile bool _isStopped = false;
+        //private Thread _networkManagerWorker;
 
         public string MinecraftVersion { get; } = "20w12a";
         public int ProtocolVersion { get; } = 707;
@@ -44,26 +50,24 @@ namespace Pluspy.Core
             else
                 _logger.LogWarning($"No favicon found. To enable favicons, save a 64x64 file called \"favicon.png\" into the server's directory.");
 
-            _ = Task.Run(StartServer);
             _logger.LogInformation($"Default server on port {_config.ServerPort}...");
             _logger.LogInformation($"Minecraft Version: {MinecraftVersion}");
             _logger.LogInformation($"Protocol Version: {ProtocolVersion}");
-        }
-
-        private void StartServer()
-        {
             _listener.Start();
-
+            
             while (!_isStopped)
             {
                 if (_isDisposed)
                     throw new ObjectDisposedException(GetType().Name);
-
+                    
                 var client = _listener.AcceptTcpClient();
-                _logger.LogDebug($"Accepted client: {client.Client.RemoteEndPoint}");
+
+                _logger.LogDebug($"[{client.Client.RemoteEndPoint}] New client incoming...");
                 _connection.Handle(client);
-                _logger.LogDebug($"Handled client: {client.Client.RemoteEndPoint}");
+                _logger.LogDebug($"[{client.Client.RemoteEndPoint}] Handled.");
             }
+            // _networkManagerWorker = new Thread(NetworkWorker);
+            // _networkManagerWorker.Start();
         }
 
         public void Stop()

@@ -24,5 +24,20 @@ namespace Pluspy.Utilities
 
             return index;
         }
+
+        public static int GetLength(int value)
+        {
+            var length = 0;
+            var temp = (uint)value;
+
+            do
+            {
+                length++;
+                temp >>= 7;
+
+            } while ((temp & 0xFFFFFF80u) != 0u);
+
+            return length;
+        }
     }
 }
