@@ -1,13 +1,9 @@
 ﻿using Pluspy.Entities;
-using Pluspy.Enums;
 using Pluspy.Net;
-using Pluspy.Net.Packets.Client;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 
 namespace Pluspy.Core
 {
@@ -15,9 +11,9 @@ namespace Pluspy.Core
     {
         private readonly MinecraftServerConfiguration _config;
         private readonly TcpListener _listener;
-        private readonly MinecraftTcpConnection _connection;
+        private readonly MinecraftConnectionManager _connection;
         private readonly MinecraftLogger _logger;
-        private readonly object _networkLock = new object();
+        //private readonly object _networkLock = new object();
         private volatile bool _isDisposed = false;
         private volatile bool _isStopped = false;
         //private Thread _networkManagerWorker;
@@ -35,7 +31,7 @@ namespace Pluspy.Core
 
             _config = config;
             _logger = MinecraftLogger.Instance;
-            _connection = new MinecraftTcpConnection(this);
+            _connection = new MinecraftConnectionManager(this);
             _logger = MinecraftLogger.Instance;
             _listener = new TcpListener(ip, config.ServerPort);
         }

@@ -1,13 +1,12 @@
-﻿using Pluspy.Entities;
+﻿using Pluspy.Core;
+using Pluspy.Entities;
 using Pluspy.Enums;
-using Pluspy.Net;
 using Pluspy.Net.Packets;
-using Pluspy.Net.Packets.Client;
-using Pluspy.Net.Packets.Server;
+using Pluspy.Net.Packets.Requests;
+using Pluspy.Net.Packets.Responses;
 using Pluspy.Utilities;
 using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -16,17 +15,18 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text.Json;
 
-namespace Pluspy.Core
+namespace Pluspy.Net
 {
-    public sealed class MinecraftTcpConnection
+    public sealed class MinecraftConnectionManager
     {
         private readonly MinecraftServer _server;
         private readonly MinecraftLogger _logger;
         private readonly HttpClient _httpClient;
         private TcpClient _client;
         private MinecraftStream _stream;
+        private NetworkService _service;
 
-        public MinecraftTcpConnection(MinecraftServer server)
+        public MinecraftConnectionManager(MinecraftServer server)
         {
             _httpClient = new HttpClient();
             _logger = MinecraftLogger.Instance;
@@ -37,6 +37,10 @@ namespace Pluspy.Core
         {
             _client = client;
             _stream = new MinecraftStream(client.GetStream());
+            _service = new NetworkService(_stream);
+
+            var handshake = _service.ReadPacket<HandshakeResponsePacket>();
+            /*
             _stream.ReadVarInt();
 
             var packetId = _stream.ReadByte();
@@ -53,7 +57,7 @@ namespace Pluspy.Core
             }
 
             var handshake = new HandshakePacket();
-            handshake.ReadFrom(_stream, default, default);
+            handshake.ReadFrom(_stream, default, default);*/
 /* 
             var protocolVersion = _stream.ReadVarInt();
             var serverAddress = _stream.ReadString();
@@ -67,18 +71,17 @@ namespace Pluspy.Core
 
             if (handshake.NextState == State.Status)
             {
-                var model = new ServerModel(
-                    new ServerVersion("20w12a", _server.ProtocolVersion),
-                    new ServerPlayerList(50, 0, 
-                        new List<UserModel>() 
-                        { 
-                            new UserModel("justnrik", "c41ef4564ca642188c94a20bd17ecc4e") 
-                        }),
+                var packet = new ServerModel(
+                    new ServerVersion(_server.MinecraftVersion, _server.ProtocolVersion),
+                    new ServerPlayerList(_server.Capacity, 0, null),
                     Text.Default,
-                    default).ToPacket().WriteTo(_stream, default, default);
+                    default).ToPacket();
+
+                _service.WritePacket(packet);
 
                 try
                 {
+                    var pingPacket = _service.ReadPacket<StatusPingPacket>();/*
                     _stream.ReadVarInt();
 
                     var latencyPacketId = _stream.ReadByte();
@@ -92,9 +95,10 @@ namespace Pluspy.Core
 
                     var pingPacket = new StatusPingPacket();
 
-                    pingPacket.ReadFrom(_stream, default, default);
+                    pingPacket.ReadFrom(_stream, default, default);*/
                     _logger.LogDebug($"Received {pingPacket.Time}");
-                    pingPacket.WriteTo(_stream, default, default);
+                    // pingPacket.WriteTo(_stream, default, default);
+                    _service.WritePacket(pingPacket);
                     _logger.LogInformation($"Successfully handled Status packet.");
                 }
                 catch (EndOfStreamException)
@@ -115,25 +119,23 @@ namespace Pluspy.Core
 
                 _logger.LogDebug($"{username} is attempting to join the game.");
 */
-                var loginRequest = new LoginStartPacket();
-
-                loginRequest.ReadFrom(_stream, default, default);
+                var loginRequest = _service.ReadPacket<LoginStartResponsePacket>();
                 _logger.LogDebug($" {loginRequest.Username} is attempting to join the game.");
 
                 var rsaProvider = new RSACryptoServiceProvider();
                 var verifyTokenRented = MemoryPool<byte>.Shared.Rent(4);
                 var verifyToken = verifyTokenRented.Memory[..4].ToArray();
                 var publicKey = rsaProvider.ExportSubjectPublicKeyInfo();
-                var encryptionRequest = new EncryptionKeyRequestPacket(publicKey, verifyToken);
+                var encryptionRequest = new EncryptionRequestPacket(publicKey, verifyToken);
 
-                encryptionRequest.WriteTo(_stream, default, default);
+                //encryptionRequest.WriteTo(_stream, default, default);
+                _service.WritePacket(encryptionRequest);
                 verifyTokenRented.Dispose();
 
                 //var length = _stream.ReadVarInt();
                 //var id = _stream.ReadVarInt();
-                var encryptionResponse = new EncryptionKeyResponsePacket();
+                var encryptionResponse = _service.ReadPacket<EncryptionResponsePacket>();
 
-                encryptionResponse.ReadFrom(_stream, default, default);
                 encryptionResponse.Decrypt(rsaProvider);
                 _logger.LogDebug("Checking verification token...");
 
@@ -176,9 +178,9 @@ namespace Pluspy.Core
 
         private void Reset()
         {
-            _logger.LogDebug($"Diconnecting the current client");
+            _logger.LogDebug($"[{_client?.Client.RemoteEndPoint}] Diconnecting...");
             _client?.Client.Disconnect(true);
-            _logger.LogDebug("Disconnected. Waiting for new clients...");
+            _logger.LogDebug($"[{_client?.Client.RemoteEndPoint}] Disconnected.");
         }
 
         public void Dispose()

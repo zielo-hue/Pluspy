@@ -1,8 +1,11 @@
-﻿namespace Pluspy.Enums
+﻿using System;
+
+namespace Pluspy.Enums
 {
+    [Flags]
     public enum PacketType
     {
-        Server,
-        Client
+        Client = 1,
+        Server = 2
     }
 }

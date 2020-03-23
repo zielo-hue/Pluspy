@@ -1,11 +1,11 @@
 ﻿using Pluspy.Core;
-using Pluspy.Net.Packets.Client;
+using Pluspy.Net.Packets.Requests;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Pluspy.Entities
 {
-    public class ServerModel : JsonSerializable<StatusResponsePacket>
+    public class ServerModel : JsonSerializable<StatusRequestPacket>
     {
         [JsonPropertyName("version")]
         public ServerVersion Version { get; }

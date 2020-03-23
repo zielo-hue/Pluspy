@@ -125,10 +125,10 @@ namespace Pluspy.Net
             }
         }
 
-        public void WriteSpan<T>(Span<T> span) where T : struct
+        public void WriteSpan(Span<byte> span)
         {
             foreach (var item in span)
-                Write(item);
+                WriteByte(item);
         }
 
         public Memory<byte> ReadMemory(int length)

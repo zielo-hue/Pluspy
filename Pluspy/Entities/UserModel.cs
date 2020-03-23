@@ -1,10 +1,9 @@
 ﻿using Pluspy.Net;
-using Pluspy.Net.Packets.Client;
 using System.Text.Json.Serialization;
 
 namespace Pluspy.Entities
 {
-    public sealed class UserModel : IPacketModel<LoginSuccessPacket>
+    public sealed class UserModel 
     {
         [JsonPropertyName("name")]
         public string Username { get; set; }
@@ -17,8 +16,5 @@ namespace Pluspy.Entities
             Username = username;
             UUID = uuid;
         }
-
-        public LoginSuccessPacket ToPacket()
-            => new LoginSuccessPacket(this);
     }
 }

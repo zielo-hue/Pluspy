@@ -18,7 +18,7 @@ namespace Pluspy.Entities
         {
             MaximumPlayers = maxPlayers;
             OnlinePlayers = onlinePlayers;
-            Players = players;
+            Players = players ??  new List<UserModel>(); // If null we need an empty list so client won't sent legacy packet
         }
     }
 }

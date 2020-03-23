@@ -1,15 +1,13 @@
 ﻿using Pluspy.Attributes;
-using Pluspy.Entities;
 using Pluspy.Enums;
-using Pluspy.Net;
-using System.Text.Json;
 
 namespace Pluspy.Net.Packets
 {
-    [Clientbound(State.Status)]
-    [Serverbound(State.Status)]
-    public struct StatusPingPacket : IPacket
+    [PacketState(State.Status)]
+    public struct StatusPingPacket : IResponsePacket, IRequestPacket
     {
+        public byte Id => 0x01;
+        public short Length => sizeof(long);
         public long Time { get; private set; }
 
         public StatusPingPacket(long time)
@@ -17,13 +15,13 @@ namespace Pluspy.Net.Packets
             Time = time;
         }
 
-        public State ReadFrom(MinecraftStream stream, State state, PacketType type)
+        public State ReadFrom(MinecraftStream stream, State state)
         {
             Time = stream.Read<long>();
             return state;
         }
 
-        public readonly State WriteTo(MinecraftStream stream, State state, PacketType type)
+        public readonly State WriteTo(MinecraftStream stream, State state)
         {
             stream.Write(Time);
             return state;
