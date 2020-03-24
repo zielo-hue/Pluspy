@@ -45,7 +45,9 @@ namespace Pluspy.Net
         public override void Write(byte[] buffer, int offset, int count)
             => BaseStream.Write(buffer.AsSpan(offset, count));
         public override void Write(ReadOnlySpan<byte> buffer)
-            => BaseStream.Write(buffer);
+        {
+            BaseStream.Write(buffer);
+        }
 
         public int ReadVarInt()
             => ReadVarInt(out _);
@@ -108,38 +110,17 @@ namespace Pluspy.Net
 
         public byte[] ReadBytes(int length)
         {
-            if (length == 0) 
+            if (length == 0)
                 return Array.Empty<byte>();
 
-            byte[] array = null;
-
-            try
-            {
-                array = ArrayPool<byte>.Shared.Rent(length);
-                BaseStream.Read(array);
-                return array;
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(array);
-            }
+            byte[] array = new byte[length];
+            BaseStream.Read(array);
+            return array;
         }
 
         public void WriteSpan(Span<byte> span)
         {
-            foreach (var item in span)
-                WriteByte(item);
-        }
-
-        public Memory<byte> ReadMemory(int length)
-        {
-            if (length == 0)
-                return Array.Empty<byte>();
-
-            using var memoryRent = MemoryPool<byte>.Shared.Rent(length);
-
-            BaseStream.Read(memoryRent.Memory.Span);
-            return memoryRent.Memory;
+            BaseStream.Write(span);
         }
 
         public string ReadString()

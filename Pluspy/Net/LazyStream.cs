@@ -1,5 +1,8 @@
-﻿using System;
+﻿using Pluspy.Utilities;
+using System;
+using System.Collections;
 using System.IO;
+using System.Security.Cryptography;
 
 namespace Pluspy.Net
 {
@@ -37,7 +40,9 @@ namespace Pluspy.Net
 
         public override void Flush()
         {
-            _stream.Write(_memoryStream.GetBuffer().AsSpan(0, (int)_memoryStream.Position));
+            int packetLength = (int)_memoryStream.Position;
+            _stream.WriteVarInt(packetLength);
+            _stream.Write(_memoryStream.GetBuffer().AsSpan(0, packetLength));
             _memoryStream.Position = 0;
         }
 

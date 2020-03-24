@@ -8,7 +8,6 @@ namespace Pluspy.Net.Packets.Requests
     public readonly struct EncryptionRequestPacket : IRequestPacket
     {
         public byte Id => 0x01;
-        public short Length => (short)(PublicKey.Length + VerifyToken.Length + (ServerId?.Length ?? 20));
         public string ServerId { get; }
         public Memory<byte> PublicKey { get; }
         public Memory<byte> VerifyToken { get; }

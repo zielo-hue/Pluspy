@@ -1,6 +1,8 @@
 ﻿using Pluspy.Attributes;
 using Pluspy.Entities;
 using Pluspy.Enums;
+using System;
+using System.Runtime.InteropServices;
 
 namespace Pluspy.Net.Packets.Responses
 {
@@ -8,7 +10,6 @@ namespace Pluspy.Net.Packets.Responses
     public readonly struct LoginSuccessRequestPacket : IRequestPacket
     {
         public byte Id => 0x02;
-        public short Length => (short)(Username.Length + UUID.Length);
         public string Username { get; }
         public string UUID { get; }
 
@@ -20,8 +21,9 @@ namespace Pluspy.Net.Packets.Responses
 
         public State WriteTo(MinecraftStream stream, State state)
         {
+            Guid userGuid = Guid.ParseExact(UUID, "N");
+            stream.WriteSpan(MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(ref userGuid, 1)));
             stream.WriteString(Username);
-            stream.WriteString(UUID); // TODO: https://wiki.vg/Pre-release_protocol#Login_Success
             return State.Play;
         }
     }

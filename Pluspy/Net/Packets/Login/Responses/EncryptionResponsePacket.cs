@@ -20,8 +20,10 @@ namespace Pluspy.Net.Packets.Responses
 
         public State ReadFrom(MinecraftStream stream, State state)
         {
-            SharedSecret = stream.ReadBytes(stream.Read<short>());
-            VerificationToken = stream.ReadBytes(stream.Read<short>());
+            int sharedSecretLength = stream.ReadVarInt();
+            SharedSecret = stream.ReadBytes(sharedSecretLength);
+            int verificationTokenLength = stream.ReadVarInt();
+            VerificationToken = stream.ReadBytes(verificationTokenLength);
             return state;
         }
     }

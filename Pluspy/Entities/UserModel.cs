@@ -10,11 +10,5 @@ namespace Pluspy.Entities
 
         [JsonPropertyName("id")]
         public string UUID { get; set; }
-
-        public UserModel(string username, string uuid)
-        {
-            Username = username;
-            UUID = uuid;
-        }
     }
 }

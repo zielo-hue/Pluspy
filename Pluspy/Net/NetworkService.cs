@@ -15,16 +15,16 @@ namespace Pluspy.Net
 
         public void WritePacket<TPacket>(TPacket packet) where TPacket : struct, IRequestPacket
         {
-            _stream.WriteVarInt(packet.Length);
-            _stream.WriteByte(packet.Id);
+            _stream.WriteVarInt(packet.Id);
             CurrentState = packet.WriteTo(_stream, CurrentState);
+            _stream.Flush();
         }
 
         public TPacket ReadPacket<TPacket>() where TPacket : struct, IResponsePacket
         {
             var packet = default(TPacket);
             var length = _stream.ReadVarInt();
-            var id = (byte)_stream.ReadByte();
+            var id = (byte)_stream.ReadVarInt();
 
             packet.Prepare(length, id);
             CurrentState = packet.ReadFrom(_stream, CurrentState);
