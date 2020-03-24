@@ -1,5 +1,5 @@
 ﻿#define FEATURE_CRYPTO
-
+#pragma warning disable
 using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
 // ==++==
@@ -943,24 +943,13 @@ namespace System.Security.Cryptography
 
         private void GenerateKeyExpansion(byte[] rgbKey)
         {
-            switch (m_blockSizeBits > rgbKey.Length * 8 ? m_blockSizeBits : rgbKey.Length * 8)
+            m_Nr = (m_blockSizeBits > rgbKey.Length * 8 ? m_blockSizeBits : rgbKey.Length * 8) switch
             {
-                case 128:
-                    m_Nr = 10;
-                    break;
-
-                case 192:
-                    m_Nr = 12;
-                    break;
-
-                case 256:
-                    m_Nr = 14;
-                    break;
-
-                default:
-                    throw new CryptographicException(("Cryptography_InvalidKeySize"));
-            }
-
+                128 => 10,
+                192 => 12,
+                256 => 14,
+                _ => throw new CryptographicException(("Cryptography_InvalidKeySize")),
+            };
             m_encryptKeyExpansion = new int[m_Nb * (m_Nr + 1)];
             m_decryptKeyExpansion = new int[m_Nb * (m_Nr + 1)];
             int iTemp;
@@ -984,7 +973,7 @@ namespace System.Security.Cryptography
                     if (i % m_Nk == 0)
                     {
                         iTemp = SubWord(rot3(iTemp));
-                        iTemp = iTemp ^ s_Rcon[(i / m_Nk) - 1];
+                        iTemp ^= s_Rcon[(i / m_Nk) - 1];
                     }
 
                     m_encryptKeyExpansion[i] = m_encryptKeyExpansion[i - m_Nk] ^ iTemp;
@@ -999,7 +988,7 @@ namespace System.Security.Cryptography
                     if (i % m_Nk == 0)
                     {
                         iTemp = SubWord(rot3(iTemp));
-                        iTemp = iTemp ^ s_Rcon[(i / m_Nk) - 1];
+                        iTemp ^= s_Rcon[(i / m_Nk) - 1];
                     }
                     else if (i % m_Nk == 4)
                     {

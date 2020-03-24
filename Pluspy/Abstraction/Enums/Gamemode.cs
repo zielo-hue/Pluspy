@@ -1,6 +1,6 @@
 ﻿namespace Pluspy.Enums
 {
-    public enum GameMode
+    public enum Gamemode
     {
         Survival = 0,
         Creative = 1,
