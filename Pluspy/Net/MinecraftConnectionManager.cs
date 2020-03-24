@@ -52,9 +52,9 @@ namespace Pluspy.Net
             {
                 var packet = new ServerModel(
                     new ServerVersion(_server.MinecraftVersion, _server.ProtocolVersion),
-                    new ServerPlayerList(_server.Capacity, 0, null),
-                    Text.Default,
-                    default).ToPacket();
+                    new ServerPlayerList(_server.Configuration.MaxPlayers, 0, null),
+                    new Text { Content = _server.Configuration.Motd },
+                    _server.Icon.FaviconString).ToPacket();
 
                 _service.WritePacket(packet);
 
@@ -85,7 +85,6 @@ namespace Pluspy.Net
                 var rsaProvider = new RSACryptoServiceProvider();
                 var verifyTokenRented = MemoryPool<byte>.Shared.Rent(4);
                 var verifyToken = verifyTokenRented.Memory[..4];
-                verifyToken.Span[3] = 17;
                 var publicKey = rsaProvider.ExportSubjectPublicKeyInfo();
                 var encryptionRequest = new EncryptionRequestPacket(publicKey, verifyToken);
 
@@ -112,7 +111,6 @@ namespace Pluspy.Net
                     if (response.StatusCode == HttpStatusCode.OK)
                     {
                         var user = JsonSerializer.Deserialize<UserModel>(response.Content.ReadAsStringAsync().Result);
-                        var userGuid = Guid.ParseExact(user.UUID, "N");
 
                         var aesTransform = new RijndaelManagedTransformCore(encryptionResponse.SharedSecret, CipherMode.CFB, encryptionResponse.SharedSecret, 128, 8, PaddingMode.None, RijndaelManagedTransformMode.Encrypt);
                         var cryptoStream = new CryptoStream(client.GetStream(), aesTransform, CryptoStreamMode.Write);
@@ -122,7 +120,7 @@ namespace Pluspy.Net
                         var loginSuccess = new LoginSuccessRequestPacket(user);
                         _service.WritePacket(loginSuccess);
 
-                        _logger.LogDebug($"{user.Username}({userGuid}) has logged in!");
+                        _logger.LogDebug($"{user.Username}({user.UUID}) has logged in!");
                     }
                     else
                         _logger.LogDebug("Session server request failed.");

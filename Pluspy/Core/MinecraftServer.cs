@@ -9,7 +9,7 @@ namespace Pluspy.Core
 {
     public sealed partial class MinecraftServer 
     {
-        private readonly MinecraftServerConfiguration _config;
+        public readonly MinecraftServerConfiguration Configuration;
         private readonly TcpListener _listener;
         private readonly MinecraftConnectionManager _connection;
         private readonly MinecraftLogger _logger;
@@ -20,16 +20,17 @@ namespace Pluspy.Core
 
         public string MinecraftVersion { get; } = "20w12a";
         public int ProtocolVersion { get; } = 707;
-        public int Capacity { get; } = 50;
-        public bool IsOnline { get; private set; }
-        public Text Description { get; set; } = Text.Default;
-        public Favicon Icon { get; set; }
+        //public int Capacity { get; } = 50;
+        //public bool IsOnline { get; private set; }
+        //public Text Description { get; set; } = Text.Default;
+
+        public Favicon Icon { get; private set; }
 
         public MinecraftServer(MinecraftServerConfiguration config)
         {
             var ip = string.IsNullOrWhiteSpace(config.ServerIp) ? IPAddress.Any : IPAddress.Parse(config.ServerIp);
 
-            _config = config;
+            Configuration = config;
             _logger = MinecraftLogger.Instance;
             _connection = new MinecraftConnectionManager(this);
             _logger = MinecraftLogger.Instance;
@@ -46,7 +47,7 @@ namespace Pluspy.Core
             else
                 _logger.LogWarning($"No favicon found. To enable favicons, save a 64x64 file called \"favicon.png\" into the server's directory.");
 
-            _logger.LogInformation($"Default server on port {_config.ServerPort}...");
+            _logger.LogInformation($"Default server on port {Configuration.ServerPort}...");
             _logger.LogInformation($"Minecraft Version: {MinecraftVersion}");
             _logger.LogInformation($"Protocol Version: {ProtocolVersion}");
             _listener.Start();
