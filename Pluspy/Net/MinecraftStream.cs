@@ -12,6 +12,8 @@ namespace Pluspy.Net
         private readonly Encoding _encoding;
 
         public Stream BaseStream { get; }
+        public Stream BaseReadStream { get; }
+
         public override bool CanRead
             => BaseStream.CanRead;
         public override bool CanSeek
@@ -26,18 +28,19 @@ namespace Pluspy.Net
             set => BaseStream.Position = value;
         }
 
-        public MinecraftStream(Stream stream)
+        public MinecraftStream(Stream writeStream, Stream readStream)
         {
             _encoding = Encoding.UTF8;
-            BaseStream = stream;
+            BaseStream = writeStream;
+            BaseReadStream = readStream;
         }
 
         public override void Flush()
             => BaseStream.Flush();
         public override int Read(byte[] buffer, int offset, int count)
-            => BaseStream.Read(buffer.AsSpan(offset, count));
+            => BaseReadStream.Read(buffer.AsSpan(offset, count));
         public override int Read(Span<byte> buffer)
-            => BaseStream.Read(buffer);
+            => BaseReadStream.Read(buffer);
         public override long Seek(long offset, SeekOrigin origin)
             => BaseStream.Seek(offset, origin);
         public override void SetLength(long value)
@@ -61,7 +64,7 @@ namespace Pluspy.Net
 
             do
             {
-                current = (byte)BaseStream.ReadByte();
+                current = (byte)BaseReadStream.ReadByte();
                 result |= (current & 0x7F) << (7 * bytesRead++);
 
                 if (bytesRead > 5)
@@ -98,7 +101,7 @@ namespace Pluspy.Net
         {
             Span<byte> span = stackalloc byte[Unsafe.SizeOf<T>()];
 
-            BaseStream.Read(span);
+            BaseReadStream.Read(span);
             return Unsafe.ReadUnaligned<T>(ref MemoryMarshal.GetReference(span));
         }
 
@@ -114,7 +117,7 @@ namespace Pluspy.Net
                 return Array.Empty<byte>();
 
             byte[] array = new byte[length];
-            BaseStream.Read(array);
+            BaseReadStream.Read(array);
             return array;
         }
 
@@ -128,7 +131,7 @@ namespace Pluspy.Net
             var length = ReadVarInt();
             Span<byte> span = stackalloc byte[length];
 
-            BaseStream.Read(span);
+            BaseReadStream.Read(span);
             return _encoding.GetString(span);
         }
 

@@ -39,7 +39,7 @@ namespace Pluspy.Net
         public void Handle(TcpClient client)
         {
             _client = client;
-            _stream = new MinecraftStream(new LazyStream(client.GetStream()));
+            _stream = new MinecraftStream(new LazyStream(client.GetStream()), client.GetStream());
             _service = new NetworkService(_stream);
 
             var handshake = _service.ReadPacket<HandshakeResponsePacket>();
@@ -113,13 +113,18 @@ namespace Pluspy.Net
                     {
                         var user = JsonSerializer.Deserialize<UserModel>(response.Content.ReadAsStringAsync().Result);
 
-                        var aesTransform = new RijndaelManagedTransformCore(encryptionResponse.SharedSecret, CipherMode.CFB, encryptionResponse.SharedSecret, 128, 8, PaddingMode.None, RijndaelManagedTransformMode.Encrypt);
-                        var cryptoStream = new CryptoStream(client.GetStream(), aesTransform, CryptoStreamMode.Write);
-                        _stream = new MinecraftStream(new LazyStream(cryptoStream));
+                        var cryptTransform = new RijndaelManagedTransformCore(encryptionResponse.SharedSecret, CipherMode.CFB, encryptionResponse.SharedSecret, 128, 8, PaddingMode.None, RijndaelManagedTransformMode.Encrypt);
+                        var decryptTransform = new RijndaelManagedTransformCore(encryptionResponse.SharedSecret, CipherMode.CFB, encryptionResponse.SharedSecret, 128, 8, PaddingMode.None, RijndaelManagedTransformMode.Decrypt);
+
+                        var cryptoStream = new CryptoStream(client.GetStream(), cryptTransform, CryptoStreamMode.Write);
+                        var decryptStream = new CryptoStream(client.GetStream(), decryptTransform, CryptoStreamMode.Read);
+                        _stream = new MinecraftStream(new LazyStream(cryptoStream), decryptStream);
                         _service = new NetworkService(_stream);
 
                         _service.WritePacket(new LoginSuccessRequestPacket(user));
-                        _service.WritePacket(new JoinGameRequests(0, Gamemode.Creative, Dimension.Overworld, 0, "flat", 12));
+                        _service.WritePacket(new JoinGameRequests(0, Gamemode.Survival, Dimension.Overworld, 0, "flat", 12));
+
+
                         _service.WritePacket(new SpawnPositionRequest(new Position()));
                         _service.WritePacket(new PlayerPositionAndLookRequest());
 
