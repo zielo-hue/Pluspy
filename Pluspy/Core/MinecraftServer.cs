@@ -18,8 +18,8 @@ namespace Pluspy.Core
         private volatile bool _isStopped = false;
         //private Thread _networkManagerWorker;
 
-        public string MinecraftVersion { get; } = "20w13a";
-        public int ProtocolVersion { get; } = 708;
+        public string MinecraftVersion { get; } = "20w13b";
+        public int ProtocolVersion { get; } = 709;
         //public int Capacity { get; } = 50;
         //public bool IsOnline { get; private set; }
         //public Text Description { get; set; } = Text.Default;
