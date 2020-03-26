@@ -2,6 +2,7 @@
 using Pluspy.Entities;
 using Pluspy.Enums;
 using Pluspy.Net.Packets;
+using Pluspy.Net.Packets.Play.Requests;
 using Pluspy.Net.Packets.Requests;
 using Pluspy.Net.Packets.Responses;
 using Pluspy.Utilities;
@@ -117,8 +118,10 @@ namespace Pluspy.Net
                         _stream = new MinecraftStream(new LazyStream(cryptoStream));
                         _service = new NetworkService(_stream);
 
-                        var loginSuccess = new LoginSuccessRequestPacket(user);
-                        _service.WritePacket(loginSuccess);
+                        _service.WritePacket(new LoginSuccessRequestPacket(user));
+                        _service.WritePacket(new JoinGameRequests(0, Gamemode.Creative, Dimension.Overworld, 0, "flat", 12));
+                        _service.WritePacket(new SpawnPositionRequest(new Position()));
+                        _service.WritePacket(new PlayerPositionAndLookRequest());
 
                         _logger.LogDebug($"{user.Username}({user.UUID}) has logged in!");
                     }

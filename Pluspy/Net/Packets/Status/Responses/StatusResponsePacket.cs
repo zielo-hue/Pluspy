@@ -7,7 +7,6 @@ namespace Pluspy.Net.Packets.Responses
     public readonly struct StatusResponsesPacket : IResponsePacket
     {
         public byte Id => 0x00;
-        public short Length => 0;
 
         public State ReadFrom(MinecraftStream stream, State state)
             => state;

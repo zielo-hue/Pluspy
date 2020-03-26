@@ -2,10 +2,9 @@
 
 namespace Pluspy.Net.Packets.Requests
 {
-    public readonly struct JoinGameRequests : IRequestPacket
+    public struct JoinGameRequests : IRequestPacket
     {
         public byte Id => 0x26;
-        public short Length => 100; // TODO: No idea. I think not needed
         public int EntityId { get; }
         public Gamemode Gamemode { get; }
         public Dimension Dimension { get; }
@@ -16,6 +15,18 @@ namespace Pluspy.Net.Packets.Requests
         public bool ReducedDebugInfo { get; }
         public bool EnableRespawnScreen { get; }
 
+        public JoinGameRequests(int entityId, Gamemode gamemode, Dimension dimension, long hashedSeed, string levelType, int viewDistance)
+        {
+            EntityId = entityId;
+            Gamemode = gamemode;
+            Dimension = dimension;
+            HashedSeed = hashedSeed;
+            LevelType = levelType;
+            ViewDistance = viewDistance;
+            ReducedDebugInfo = false;
+            EnableRespawnScreen = true;
+        }
+
         public State WriteTo(MinecraftStream stream, State state)
         {
             stream.Write(EntityId);
@@ -24,7 +35,7 @@ namespace Pluspy.Net.Packets.Requests
             stream.Write(HashedSeed);
             stream.Write(MaxPlayers);
             stream.WriteString(LevelType);
-            stream.Write(ViewDistance);
+            stream.WriteVarInt(ViewDistance);
             stream.Write(ReducedDebugInfo);
             stream.Write(EnableRespawnScreen);
             return state;
